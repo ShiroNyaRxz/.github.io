@@ -13,7 +13,7 @@
             background-size: cover; background-position: center; background-attachment: fixed;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; cursor: help; }
+        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
         header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
         #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; backdrop-filter: blur(5px); }
         .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
@@ -37,18 +37,17 @@
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
         .small-btn.active { background: #ff4d4d; color: white; }
-        .delete-btn { position: absolute; top: 10px; right: 10px; background: black; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; z-index: 10; display: none; }
     </style>
 </head>
 <body>
 
     <audio id="bgm-player" src="bgm.mp3" loop preload="auto"></audio>
 
-    <div class="header-container" onclick="adminLogin()">
+    <div class="header-container">
         <header><h1>⛩️ 許願牆 ⛩️</h1></header>
-        <button id="music-toggle" onclick="event.stopPropagation(); toggleMusic()">靜</button>
+        <button id="music-toggle" onclick="toggleMusic()">靜</button>
     </div>
-    <div class="sub-title">點擊標題開啟管理員模式｜留下願望，說不定會實現喔！</div>
+    <div class="sub-title">留下你的願望，說不定會實現喔！</div>
 
     <div class="input-section">
         <input type="text" id="author-name" placeholder="你的大名">
@@ -60,7 +59,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
@@ -76,9 +75,7 @@
         const db = getDatabase(app);
         const wishesRef = ref(db, 'wishes');
 
-        let isAdmin = false;
-
-        // 核心：監測資料庫
+        // 監測資料庫更新
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
             if (!board) return;
@@ -93,7 +90,6 @@
             const container = document.createElement('div');
             container.className = 'ema-container';
             
-            // 檢查 LocalStorage 判斷是否點過讚
             const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
             const isLiked = likedWishes.includes(id);
 
@@ -102,7 +98,6 @@
                 : '尚未有回饋...';
 
             container.innerHTML = `
-                <button class="delete-btn" style="display: ${isAdmin ? 'block' : 'none'}" onclick="event.stopPropagation(); window.deleteWish('${id}')">×</button>
                 <div class="ema-card" style="transform: rotate(${wish.rotate || 0}deg);" onclick="this.classList.toggle('is-flipped')">
                     <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
                         <div class="meta-top">祈願人：${wish.author || '無名氏'}</div>
@@ -128,30 +123,15 @@
 
         // --- 功能函式 ---
 
-        window.adminLogin = function() {
-            const pass = prompt("請輸入管理員密碼：");
-            if (pass === "8888") { // 你可以修改成自己的密碼
-                isAdmin = !isAdmin;
-                alert(isAdmin ? "已開啟管理員模式 (點擊卡片右上角 X 即可刪除)" : "已關閉管理員模式");
-                // 觸發重新渲染
-                onValue(wishesRef, (snapshot) => {}, { onlyOnce: true }); 
-            } else if (pass !== null) {
-                alert("密碼錯誤！");
-            }
-        };
-
-        window.deleteWish = function(id) {
-            if (confirm("確定要刪除這個願望嗎？這操作無法復原。")) {
-                remove(ref(db, `wishes/${id}`));
-            }
-        };
-
         window.addNewWish = function() {
             const author = document.getElementById('author-name').value || "無名氏";
             const content = document.getElementById('wish-text').value;
             if (!content) return alert("請寫下願望內容");
+
             push(wishesRef, {
-                author, content, likes: 0,
+                author, 
+                content, 
+                likes: 0,
                 date: new Date().toLocaleDateString(),
                 color: getRandomHexColor(),
                 rotate: getRandomRotate()
@@ -164,13 +144,10 @@
         window.handleLike = function(id, currentLikes) {
             let likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
             const index = likedWishes.indexOf(id);
-
             if (index === -1) {
-                // 沒點過讚 -> 加 1
                 likedWishes.push(id);
                 update(ref(db, `wishes/${id}`), { likes: currentLikes + 1 });
             } else {
-                // 點過讚了 -> 減 1 (移除愛心)
                 likedWishes.splice(index, 1);
                 update(ref(db, `wishes/${id}`), { likes: Math.max(0, currentLikes - 1) });
             }
@@ -187,7 +164,7 @@
             const bgm = document.getElementById('bgm-player');
             const musicBtn = document.getElementById('music-toggle');
             if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
-            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先與頁面互動")); }
+            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先與頁面互動再開啟音樂")); }
         };
 
         function getRandomHexColor() {

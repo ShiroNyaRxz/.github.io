@@ -1,167 +1,119 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⛩️ 許願牆 ⛩️</title>
-    <style>
-        :root { --shrine-red: #ff4d4d; --text-color: #3e2723; }
-        body {
-            font-family: "Noto Sans TC", sans-serif;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('夜景.jpg');
-            background-size: cover; background-position: center; background-attachment: fixed;
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+<script type="module">
+    // 1. 引入 Firebase SDK (包含 App 與 Database)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+    // 2. Firebase 配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyBfSERMKFCSWRx3JyZAwtfZ9EPcndiH4U4",
+        authDomain: "webhw-57e2e.firebaseapp.com",
+        databaseURL: "https://webhw-57e2e-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "webhw-57e2e",
+        storageBucket: "webhw-57e2e.firebasestorage.app",
+        messagingSenderId: "893204464032",
+        appId: "1:893204464032:web:1d6dc5b5a0d625685664c5",
+        measurementId: "G-4NJHP1B5M9"
+    };
+
+    // 初始化 Firebase 與資料庫
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const wishesRef = ref(db, 'wishes');
+
+    // --- 核心：實時監測資料庫並顯示 ---
+    onValue(wishesRef, (snapshot) => {
+        const board = document.getElementById('ema-board');
+        board.innerHTML = '';
+        const data = snapshot.val();
+        if (data) {
+            // 將資料從雲端抓下來顯示，最新發布的在前面
+            Object.keys(data).reverse().forEach(key => {
+                const wish = data[key];
+                renderSingleWish(key, wish);
+            });
         }
-        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
-        header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
-        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; backdrop-filter: blur(5px); }
-        .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
-        .input-section { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); padding: 20px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.4); margin-bottom: 40px; width: 100%; max-width: 450px; }
-        input, textarea { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .primary-btn { background: var(--shrine-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
-        #ema-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 35px; width: 100%; max-width: 1200px; perspective: 1000px; }
-        .ema-container { width: 280px; height: 200px; position: relative; }
-        .ema-card { width: 100%; height: 100%; position: relative; transition: transform 0.8s; transform-style: preserve-3d; cursor: pointer; }
-        .ema-card.is-flipped { transform: rotateY(180deg) !important; }
-        .ema-front, .ema-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
-        .ema-front { z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .ema-back { transform: rotateY(180deg); filter: brightness(0.92); }
-        .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.5); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; }
-        .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-    </style>
-</head>
-<body>
+    });
 
-    <audio id="bgm-player" src="bgm.mp3" loop preload="auto"></audio>
+    // 渲染單個許願卡
+    function renderSingleWish(id, wish) {
+        const board = document.getElementById('ema-board');
+        const container = document.createElement('div');
+        container.className = 'ema-container';
+        
+        // 處理留言列表 (防呆)
+        const commentsHtml = wish.comments 
+            ? Object.values(wish.comments).map(c => `<div style="margin-bottom:4px;"><b>${c.user}:</b> ${c.text}</div>`).join('') 
+            : '尚未回覆...';
 
-    <div class="header-container">
-        <header><h1>⛩️ 許願牆 ⛩️</h1></header>
-        <button id="music-toggle" onclick="toggleMusic()">🔇</button>
-    </div>
-    <div class="sub-title">留下你的願望，說不定會實現喔！</div>
-
-    <div class="input-section">
-        <input type="text" id="author-name" placeholder="你的大名">
-        <textarea id="wish-text" rows="3" placeholder="寫下你的願望..."></textarea>
-        <button class="primary-btn" onclick="addNewWish()">奉納 (掛上願望)</button>
-    </div>
-
-    <div id="ema-board"></div>
-
-    <!-- Firebase SDK 與 邏輯腳本 (依照指示放在 body 標記最下方) -->
-    <script type="module">
-        // 1. 引入 Firebase SDK (使用完整 CDN 網址)
-         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
-
-        // 2. 你的 Firebase 配置 (已套用你提供的資料)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBfSERMKFCSWRx3JyZAwtfZ9EPcndiH4U4",
-            authDomain: "webhw-57e2e.firebaseapp.com",
-            databaseURL: "https://webhw-57e2e-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "webhw-57e2e",
-            storageBucket: "webhw-57e2e.firebasestorage.app",
-            messagingSenderId: "893204464032",
-            appId: "1:893204464032:web:1d6dc5b5a0d625685664c5",
-            measurementId: "G-4NJHP1B5M9"
-        };
-
-        // 初始化 Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-
-        // --- 核心：實時監測資料庫並顯示 ---
-        onValue(wishesRef, (snapshot) => {
-            const board = document.getElementById('ema-board');
-            board.innerHTML = '';
-            const data = snapshot.val();
-            if (data) {
-                // 將資料從雲端抓下來顯示，最新發布的在前面
-                Object.keys(data).reverse().forEach(key => {
-                    const wish = data[key];
-                    renderSingleWish(key, wish);
-                });
-            }
-        });
-
-        // 渲染單個許願卡
-        function renderSingleWish(id, wish) {
-            const board = document.getElementById('ema-board');
-            const container = document.createElement('div');
-            container.className = 'ema-container';
-            container.innerHTML = `
-                <div class="ema-card" style="background-color: ${wish.color}; transform: rotate(${wish.rotate}deg);" onclick="this.classList.toggle('is-flipped')">
-                    <div class="ema-front" style="background-color: ${wish.color};">
-                        <div class="meta-top">祈願人：${wish.author}</div>
-                        <div class="wish-content">「${wish.content}」</div>
-                        <div class="footer-actions">
-                            <span style="font-size: 0.7em;">${wish.date}</span>
-                            <button class="small-btn" onclick="event.stopPropagation(); handleLike('${id}', ${wish.likes})">❤️ <span class="like-count">${wish.likes}</span></button>
-                        </div>
-                    </div>
-                    <div class="ema-back" style="background-color: ${wish.color};">
-                        <strong style="font-size: 0.85em; border-bottom: 1px solid rgba(0,0,0,0.2);">📜 溫暖回饋</strong>
-                        <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">
-                            ${wish.comments ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') : '尚未回覆...'}
-                        </div>
-                        <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); leaveComment('${id}')">我也要留言</button>
+        container.innerHTML = `
+            <div class="ema-card" style="transform: rotate(${wish.rotate}deg);" onclick="this.classList.toggle('is-flipped')">
+                <div class="ema-front" style="background-color: ${wish.color};">
+                    <div class="meta-top">祈願人：${wish.author}</div>
+                    <div class="wish-content">「${wish.content}」</div>
+                    <div class="footer-actions">
+                        <span style="font-size: 0.7em;">${wish.date}</span>
+                        <button class="small-btn" onclick="event.stopPropagation(); handleLike('${id}', ${wish.likes})">❤️ <span class="like-count">${wish.likes}</span></button>
                     </div>
                 </div>
-            `;
-            board.appendChild(container);
+                <div class="ema-back" style="background-color: ${wish.color};">
+                    <strong style="font-size: 0.85em; border-bottom: 1px solid rgba(0,0,0,0.2);">📜 溫暖回饋</strong>
+                    <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">
+                        ${commentsHtml}
+                    </div>
+                    <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); leaveComment('${id}')">我也要留言</button>
+                </div>
+            </div>
+        `;
+        board.appendChild(container);
+    }
+
+    // --- 功能函式掛載到 window ---
+    window.addNewWish = function() {
+        const author = document.getElementById('author-name').value || "無名氏";
+        const content = document.getElementById('wish-text').value;
+        if (!content) return alert("請寫下願望內容");
+
+        push(wishesRef, {
+            author, 
+            content,
+            likes: 0,
+            date: new Date().toLocaleDateString(),
+            color: getRandomHexColor(),
+            rotate: getRandomRotate()
+        }).then(() => {
+            document.getElementById('wish-text').value = '';
+            document.getElementById('author-name').value = '';
+        });
+    };
+
+    window.toggleMusic = function() {
+        const bgm = document.getElementById('bgm-player');
+        const musicBtn = document.getElementById('music-toggle');
+        if (!bgm.paused) {
+            bgm.pause(); musicBtn.innerText = '🔇';
+        } else {
+            bgm.play().then(() => { musicBtn.innerText = '🔊'; }).catch(() => alert("請先點擊頁面任意處再開啟"));
         }
+    };
 
-        // --- 功能函式 (掛載到 window 解決 is not defined) ---
-        
-        window.addNewWish = function() {
-            const author = document.getElementById('author-name').value || "無名氏";
-            const content = document.getElementById('wish-text').value;
-            if (!content) return alert("請寫下願望內容");
+    window.handleLike = function(id, currentLikes) {
+        update(ref(db, `wishes/${id}`), { likes: (currentLikes || 0) + 1 });
+    };
 
-            push(wishesRef, {
-                author, content,
-                likes: 0,
-                date: new Date().toLocaleDateString(),
-                color: getRandomHexColor(),
-                rotate: getRandomRotate()
-            }).then(() => {
-                document.getElementById('wish-text').value = '';
-                document.getElementById('author-name').value = '';
-            });
-        };
-
-        window.toggleMusic = function() {
-            const bgm = document.getElementById('bgm-player');
-            const musicBtn = document.getElementById('music-toggle');
-            if (!bgm.paused) {
-                bgm.pause(); musicBtn.innerText = '🔇';
-            } else {
-                bgm.play().then(() => { musicBtn.innerText = '🔊'; }).catch(() => alert("請先點擊頁面再開啟"));
-            }
-        };
-
-        window.handleLike = function(id, currentLikes) {
-            update(ref(db, `wishes/${id}`), { likes: (currentLikes || 0) + 1 });
-        };
-
-        window.leaveComment = function(id) {
-            const user = prompt("你的名字？") || "匿名者";
-            const text = prompt("想說些什麼？");
-            if (text) {
-                push(ref(db, `wishes/${id}/comments`), { user, text });
-            }
-        };
-
-        // 隨機顏色與角度工具
-        function getRandomHexColor() {
-            const letters = 'BCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * letters.length)];
-            return color;
+    window.leaveComment = function(id) {
+        const user = prompt("你的名字？") || "匿名者";
+        const text = prompt("想說些什麼？");
+        if (text) {
+            push(ref(db, `wishes/${id}/comments`), { user, text });
         }
-        function getRandomRotate() { return Math.floor(Math.random() * 6) - 3; }
-    </script>
-</body>
-</html>
+    };
+
+    // 工具函式
+    function getRandomHexColor() {
+        const letters = 'BCDEF'; // 使用較淺的顏色確保文字清晰
+        let color = '#';
+        for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * letters.length)];
+        return color;
+    }
+    function getRandomRotate() { return Math.floor(Math.random() * 6) - 3; }
+</script>

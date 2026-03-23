@@ -8,8 +8,7 @@
         :root { --shrine-red: #ff4d4d; }
         body {
             font-family: "Noto Sans TC", sans-serif;
-            background-color: #1a1a1a; 
-            /* 修正：將檔名更改為「夜景.jpg」 */
+            background-color: #1a1a1a;
             background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('夜景.jpg');
             background-size: cover; background-position: center; background-attachment: fixed;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
@@ -18,7 +17,7 @@
         .header-container { border-bottom: 3px solid var(--shrine-red); margin-bottom: 30px; }
         header h1 { color: white; margin: 10px; font-size: 2em; letter-spacing: 5px; text-shadow: 0 0 8px rgba(255,0,0,0.6); }
 
-        /* 輸入框區塊樣式 - 復刻截圖 1 & 3 */
+        /* 輸入框區塊 */
         .input-card { 
             background: #f8f8f8; padding: 25px; border-radius: 20px; 
             width: 100%; max-width: 480px; margin-bottom: 50px; 
@@ -30,15 +29,14 @@
         }
         textarea { resize: none; min-height: 120px; }
         
-        /* 奉納按鈕樣式 - 復刻截圖 1 的深灰色冷卻狀態 */
+        /* 奉納按鈕 */
         .submit-btn { 
             background: #555555; color: white; border: none; padding: 18px; 
             width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.3em;
-            transition: background 0.3s;
         }
         .submit-btn:not(:disabled) { background: #ff5252; }
 
-        /* 繪馬牆排列 - 復刻截圖 2 */
+        /* 繪馬牆排列 */
         #ema-board { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
@@ -46,7 +44,6 @@
         }
         .ema-container { width: 300px; height: 210px; margin: 0 auto; position: relative; }
         
-        /* 繪馬形狀比例 - 屋頂角度調緩 */
         .ema-front { 
             position: absolute; width: 100%; height: 100%; 
             clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%); 
@@ -67,14 +64,16 @@
             font-size: 0.75em; color: #666; font-weight: bold; margin-top: 5px;
         }
 
-        /* 點讚橢圓膠囊樣式 - 復刻截圖 2 */
+        /* 點讚按鈕樣式 */
         .like-pill {
             background: #ff5252; color: white; border-radius: 20px;
             padding: 4px 12px; display: flex; align-items: center; gap: 4px;
-            cursor: pointer; box-shadow: 0 2px 6px rgba(255,82,82,0.4);
+            cursor: pointer; transition: 0.3s;
         }
+        /* 已點讚狀態：顏色變深 */
+        .like-pill.voted { background: #b71c1c; filter: brightness(0.8); }
 
-        /* 聊天室視窗 */
+        /* 聊天室 */
         #chat-window { 
             position: fixed; bottom: 20px; right: 20px; width: 300px; height: 400px; 
             background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
@@ -126,6 +125,8 @@
         const db = getDatabase(app);
         const wishesRef = ref(db, 'wishes');
         const chatRef = ref(db, 'chat');
+        const deviceId = localStorage.getItem('shrine_visitor_id') || ('v_' + Math.random().toString(36).substr(2, 9));
+        localStorage.setItem('shrine_visitor_id', deviceId);
 
         function sanitize(str) {
             const temp = document.createElement('div');
@@ -151,6 +152,7 @@
         }
         startTimer();
 
+        // 渲染繪馬
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
             board.innerHTML = '';
@@ -158,6 +160,8 @@
             if (data) {
                 Object.keys(data).reverse().forEach(key => {
                     const w = data[key];
+                    // 檢查當前用戶是否有點過讚
+                    const hasVoted = w.voters && w.voters[deviceId];
                     const div = document.createElement('div');
                     div.className = 'ema-container';
                     div.innerHTML = `
@@ -166,7 +170,9 @@
                             <div class="wish-text">${sanitize(w.content)}</div>
                             <div class="footer">
                                 <span>${w.date}</span>
-                                <div class="like-pill" onclick="window.like('${key}')">❤️ ${w.likes || 0}</div>
+                                <div class="like-pill ${hasVoted ? 'voted' : ''}" onclick="window.like('${key}')">
+                                    ❤️ ${w.likes || 0}
+                                </div>
                             </div>
                         </div>`;
                     board.appendChild(div);
@@ -174,14 +180,32 @@
             }
         });
 
+        // 點讚限制邏輯
+        window.like = (id) => {
+            runTransaction(ref(db, `wishes/${id}`), (w) => {
+                if (w) {
+                    w.voters = w.voters || {};
+                    if (w.voters[deviceId]) {
+                        // 已點讚 -> 扣掉
+                        w.likes = Math.max(0, (w.likes || 1) - 1);
+                        delete w.voters[deviceId];
+                    } else {
+                        // 未點讚 -> 加上去
+                        w.likes = (w.likes || 0) + 1;
+                        w.voters[deviceId] = true;
+                    }
+                }
+                return w;
+            });
+        };
+
+        // 聊天與許願 (其餘不變)
         onValue(query(chatRef, limitToLast(40)), (snap) => {
             const box = document.getElementById('chat-messages');
             box.innerHTML = '';
             const val = snap.val();
             if(val) Object.values(val).forEach(m => {
-                const d = document.createElement('div');
-                d.innerHTML = `<b>${sanitize(m.user)}:</b> ${sanitize(m.text)}`;
-                box.appendChild(d);
+                box.innerHTML += `<div><b>${sanitize(m.user)}:</b> ${sanitize(m.text)}</div>`;
             });
             box.scrollTop = box.scrollHeight;
         });
@@ -191,19 +215,12 @@
             if (!text) return;
             push(wishesRef, {
                 nickname: document.getElementById('nickname').value || "無名氏",
-                content: text, likes: 0, date: new Date().toLocaleDateString(),
+                content: text, likes: 0, date: new Date().toLocaleDateString(), voters: {},
                 color: ['#ffcdd2', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff9c4'][Math.floor(Math.random()*5)]
             }).then(() => {
                 localStorage.setItem('shrine_cooldown', Date.now());
                 startTimer();
                 document.getElementById('content').value = '';
-            });
-        };
-
-        window.like = (id) => {
-            runTransaction(ref(db, `wishes/${id}`), (w) => {
-                if (w) w.likes = (w.likes || 0) + 1;
-                return w;
             });
         };
 

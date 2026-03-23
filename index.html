@@ -8,12 +8,12 @@
         :root { --shrine-red: #ff4d4d; --text-color: #3e2723; }
         body {
             font-family: "Noto Sans TC", sans-serif;
-            background-color: #1a1a1a; /* 備用背景色 */
+            background-color: #1a1a1a;
             background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('夜景.jpg');
             background-size: cover; background-position: center; background-attachment: fixed;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
+        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; cursor: help; }
         header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
         #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; backdrop-filter: blur(5px); }
         .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
@@ -35,18 +35,20 @@
         .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.5); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; }
         .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
+        .small-btn.active { background: #ff4d4d; color: white; }
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: black; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; z-index: 10; display: none; }
     </style>
 </head>
 <body>
 
     <audio id="bgm-player" src="bgm.mp3" loop preload="auto"></audio>
 
-    <div class="header-container">
+    <div class="header-container" onclick="adminLogin()">
         <header><h1>⛩️ 許願牆 ⛩️</h1></header>
-        <button id="music-toggle" onclick="toggleMusic()">🔇</button>
+        <button id="music-toggle" onclick="event.stopPropagation(); toggleMusic()">靜</button>
     </div>
-    <div class="sub-title">留下你的願望，說不定會實現喔！</div>
+    <div class="sub-title">點擊標題開啟管理員模式｜留下願望，說不定會實現喔！</div>
 
     <div class="input-section">
         <input type="text" id="author-name" placeholder="你的大名">
@@ -57,11 +59,9 @@
     <div id="ema-board"></div>
 
     <script type="module">
-        // 1. 引入 Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-        // 2. 你的新 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
@@ -72,49 +72,50 @@
             appId: "1:334763145278:web:fee884425309a3e471b96f"
         };
 
-        // 初始化
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const wishesRef = ref(db, 'wishes');
 
-        // --- 核心：實時監測資料庫並顯示 ---
+        let isAdmin = false;
+
+        // 核心：監測資料庫
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
-            if (!board) return; // 防呆：確保 HTML 元素已載入
-
+            if (!board) return;
             board.innerHTML = '';
             const data = snapshot.val();
-            
             if (data) {
-                // 將資料從雲端抓下來顯示，最新發布的在前面
-                Object.keys(data).reverse().forEach(key => {
-                    const wish = data[key];
-                    renderSingleWish(board, key, wish);
-                });
+                Object.keys(data).reverse().forEach(key => renderSingleWish(board, key, data[key]));
             }
         });
 
-        // 渲染單個許願卡
         function renderSingleWish(board, id, wish) {
             const container = document.createElement('div');
             container.className = 'ema-container';
             
+            // 檢查 LocalStorage 判斷是否點過讚
+            const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
+            const isLiked = likedWishes.includes(id);
+
             const commentsHtml = wish.comments 
-                ? Object.values(wish.comments).map(c => `<div style="margin-bottom:4px;"><b>${c.user}:</b> ${c.text}</div>`).join('') 
+                ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
                 : '尚未有回饋...';
 
             container.innerHTML = `
+                <button class="delete-btn" style="display: ${isAdmin ? 'block' : 'none'}" onclick="event.stopPropagation(); window.deleteWish('${id}')">×</button>
                 <div class="ema-card" style="transform: rotate(${wish.rotate || 0}deg);" onclick="this.classList.toggle('is-flipped')">
                     <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
                         <div class="meta-top">祈願人：${wish.author || '無名氏'}</div>
                         <div class="wish-content">「${wish.content}」</div>
                         <div class="footer-actions">
                             <span style="font-size: 0.7em;">${wish.date}</span>
-                            <button class="small-btn" onclick="event.stopPropagation(); window.handleLike('${id}', ${wish.likes || 0})">❤️ <span class="like-count">${wish.likes || 0}</span></button>
+                            <button class="small-btn ${isLiked ? 'active' : ''}" onclick="event.stopPropagation(); window.handleLike('${id}', ${wish.likes || 0})">
+                                ❤️ <span class="like-count">${wish.likes || 0}</span>
+                            </button>
                         </div>
                     </div>
                     <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
-                        <strong style="font-size: 0.85em; border-bottom: 1px solid rgba(0,0,0,0.2);">📜 溫暖回饋</strong>
+                        <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
                         <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">
                             ${commentsHtml}
                         </div>
@@ -125,51 +126,72 @@
             board.appendChild(container);
         }
 
-        // --- 功能函式 (掛載到 window 解決 HTML onclick 找不到的問題) ---
-        
+        // --- 功能函式 ---
+
+        window.adminLogin = function() {
+            const pass = prompt("請輸入管理員密碼：");
+            if (pass === "8888") { // 你可以修改成自己的密碼
+                isAdmin = !isAdmin;
+                alert(isAdmin ? "已開啟管理員模式 (點擊卡片右上角 X 即可刪除)" : "已關閉管理員模式");
+                // 觸發重新渲染
+                onValue(wishesRef, (snapshot) => {}, { onlyOnce: true }); 
+            } else if (pass !== null) {
+                alert("密碼錯誤！");
+            }
+        };
+
+        window.deleteWish = function(id) {
+            if (confirm("確定要刪除這個願望嗎？這操作無法復原。")) {
+                remove(ref(db, `wishes/${id}`));
+            }
+        };
+
         window.addNewWish = function() {
             const author = document.getElementById('author-name').value || "無名氏";
             const content = document.getElementById('wish-text').value;
             if (!content) return alert("請寫下願望內容");
-
             push(wishesRef, {
-                author, content,
-                likes: 0,
+                author, content, likes: 0,
                 date: new Date().toLocaleDateString(),
                 color: getRandomHexColor(),
                 rotate: getRandomRotate()
             }).then(() => {
                 document.getElementById('wish-text').value = '';
                 document.getElementById('author-name').value = '';
-            }).catch(err => alert("發布失敗，請檢查資料庫規則設定！"));
-        };
-
-        window.toggleMusic = function() {
-            const bgm = document.getElementById('bgm-player');
-            const musicBtn = document.getElementById('music-toggle');
-            if (!bgm.paused) {
-                bgm.pause(); musicBtn.innerText = '🔇';
-            } else {
-                bgm.play().then(() => { musicBtn.innerText = '🔊'; }).catch(() => alert("請先點擊頁面任意處再開啟"));
-            }
+            });
         };
 
         window.handleLike = function(id, currentLikes) {
-            update(ref(db, `wishes/${id}`), { likes: currentLikes + 1 });
+            let likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
+            const index = likedWishes.indexOf(id);
+
+            if (index === -1) {
+                // 沒點過讚 -> 加 1
+                likedWishes.push(id);
+                update(ref(db, `wishes/${id}`), { likes: currentLikes + 1 });
+            } else {
+                // 點過讚了 -> 減 1 (移除愛心)
+                likedWishes.splice(index, 1);
+                update(ref(db, `wishes/${id}`), { likes: Math.max(0, currentLikes - 1) });
+            }
+            localStorage.setItem('likedWishes', JSON.stringify(likedWishes));
         };
 
         window.leaveComment = function(id) {
             const user = prompt("你的名字？") || "匿名者";
             const text = prompt("想說些什麼？");
-            if (text) {
-                push(ref(db, `wishes/${id}/comments`), { user, text });
-            }
+            if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
         };
 
-        // 隨機顏色與角度工具
+        window.toggleMusic = function() {
+            const bgm = document.getElementById('bgm-player');
+            const musicBtn = document.getElementById('music-toggle');
+            if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
+            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先與頁面互動")); }
+        };
+
         function getRandomHexColor() {
-            const colors = ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff3e0'];
-            return colors[Math.floor(Math.random() * colors.length)];
+            return ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff3e0'][Math.floor(Math.random() * 5)];
         }
         function getRandomRotate() { return Math.floor(Math.random() * 6) - 3; }
     </script>

@@ -53,8 +53,8 @@
     <!-- Firebase SDK 與 邏輯腳本 (依照指示放在 body 標記最下方) -->
     <script type="module">
         // 1. 引入 Firebase SDK (使用完整 CDN 網址)
-        import { initializeApp } from "https://www.gstatic.com";
-        import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com";
+         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
 
         // 2. 你的 Firebase 配置 (已套用你提供的資料)
         const firebaseConfig = {

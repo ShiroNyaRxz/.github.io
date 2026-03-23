@@ -13,11 +13,25 @@
             background-size: cover; background-position: center; background-attachment: fixed;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
+        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
         header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
-        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; backdrop-filter: blur(5px); }
+        
+        /* 登入區塊樣式 */
+        .auth-section { margin-bottom: 20px; text-align: center; color: white; }
+        .login-btn { background: white; color: #444; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; margin: 0 auto; transition: 0.3s; }
+        .login-btn:hover { background: #eee; }
+        .user-info { display: none; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 20px; }
+        .user-info img { width: 30px; height: 30px; border-radius: 50%; }
+
         .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
-        .input-section { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); padding: 20px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.4); margin-bottom: 40px; width: 100%; max-width: 450px; }
+        
+        /* 輸入區預設隱藏，登入後顯示 */
+        .input-section { 
+            display: none; 
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); 
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.4); 
+            margin-bottom: 40px; width: 100%; max-width: 450px; 
+        }
         input, textarea { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         .primary-btn { background: var(--shrine-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
         
@@ -25,21 +39,16 @@
         .ema-container { width: 280px; height: 200px; position: relative; margin: 0 auto; }
         .ema-card { width: 100%; height: 100%; position: relative; transition: transform 0.8s; transform-style: preserve-3d; cursor: pointer; }
         .ema-card.is-flipped { transform: rotateY(180deg) !important; }
-        .ema-front, .ema-back { 
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; 
-            clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); 
-            padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; 
-        }
+        .ema-front, .ema-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .ema-front { z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .ema-back { transform: rotateY(180deg); filter: brightness(0.92); }
         .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.5); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; }
         .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         
-        /* 點讚按鈕優化 */
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 4px; border: 1px solid transparent; }
-        .small-btn.active { background: #ff4d4d; color: white; transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 77, 77, 0.4); border-color: #ffcccc; }
-        .small-btn:active { transform: scale(0.9); } /* 點擊時縮小 */
+        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 4px; }
+        .small-btn.active { background: #ff4d4d !important; color: white !important; }
+        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
     </style>
 </head>
 <body>
@@ -48,14 +57,26 @@
 
     <div class="header-container">
         <header><h1>⛩️ 許願牆 ⛩️</h1></header>
-        <button id="music-toggle" onclick="toggleMusic()">靜</button>
+        <button id="music-toggle" onclick="window.toggleMusic()">靜</button>
     </div>
-    <div class="sub-title">留下你的願望，說不定會實現喔！</div>
 
-    <div class="input-section">
-        <input type="text" id="author-name" placeholder="你的大名">
+    <div class="auth-section">
+        <button id="login-btn" class="login-btn" onclick="window.login()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> 使用 Google 登入以許願
+        </button>
+        <div id="user-info" class="user-info">
+            <img id="user-pic" src="">
+            <span id="user-name"></span>
+            <button class="small-btn" style="color:white; background:rgba(255,255,255,0.2)" onclick="window.logout()">登出</button>
+        </div>
+    </div>
+
+    <div class="sub-title">登入後即可奉納願望｜誠心則靈</div>
+
+    <div class="input-section" id="wish-input-area">
+        <input type="text" id="author-name" placeholder="想用的稱呼 (預設為 Google 暱稱)">
         <textarea id="wish-text" rows="3" placeholder="寫下你的願望..."></textarea>
-        <button class="primary-btn" onclick="addNewWish()">奉納 (掛上願望)</button>
+        <button class="primary-btn" onclick="window.addNewWish()">奉納 (掛上願望)</button>
     </div>
 
     <div id="ema-board"></div>
@@ -63,6 +84,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
@@ -76,29 +98,56 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
         const wishesRef = ref(db, 'wishes');
 
+        let currentUser = null;
+
+        // --- 監測登入狀態 ---
+        onAuthStateChanged(auth, (user) => {
+            const loginBtn = document.getElementById('login-btn');
+            const userInfo = document.getElementById('user-info');
+            const inputArea = document.getElementById('wish-input-area');
+            
+            if (user) {
+                currentUser = user;
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                inputArea.style.display = 'block';
+                document.getElementById('user-name').innerText = user.displayName;
+                document.getElementById('user-pic').src = user.photoURL;
+                document.getElementById('author-name').value = user.displayName;
+            } else {
+                currentUser = null;
+                loginBtn.style.display = 'flex';
+                userInfo.style.display = 'none';
+                inputArea.style.display = 'none';
+            }
+        });
+
+        window.login = () => signInWithPopup(auth, provider).catch(err => alert("登入失敗：" + err.message));
+        window.logout = () => signOut(auth);
+
+        // --- 願望牆邏輯 ---
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
             if (!board) return;
             board.innerHTML = '';
             const data = snapshot.val();
             if (data) {
-                Object.keys(data).reverse().forEach(key => renderSingleWish(board, key, data[key]));
+                const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
+                Object.keys(data).reverse().forEach(key => {
+                    renderSingleWish(board, key, data[key], likedWishes.includes(key));
+                });
             }
         });
 
-        function renderSingleWish(board, id, wish) {
+        function renderSingleWish(board, id, wish, isLiked) {
             const container = document.createElement('div');
             container.className = 'ema-container';
-            
-            const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
-            const isLiked = likedWishes.includes(id);
-            const displayLikes = parseInt(wish.likes) || 0; // 強制轉數字防呆
-
-            const commentsHtml = wish.comments 
-                ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
-                : '尚未有回饋...';
+            const displayLikes = parseInt(wish.likes) || 0;
+            const commentsHtml = wish.comments ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') : '尚未有回饋...';
 
             container.innerHTML = `
                 <div class="ema-card" style="transform: rotate(${wish.rotate || 0}deg);" onclick="this.classList.toggle('is-flipped')">
@@ -115,9 +164,7 @@
                     </div>
                     <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
                         <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
-                        <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">
-                            ${commentsHtml}
-                        </div>
+                        <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">${commentsHtml}</div>
                         <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); window.leaveComment('${id}')">我也要留言</button>
                     </div>
                 </div>
@@ -126,18 +173,19 @@
         }
 
         window.addNewWish = function() {
-            const author = document.getElementById('author-name').value || "無名氏";
+            if (!currentUser) return alert("請先登入 Google！");
+            const author = document.getElementById('author-name').value || currentUser.displayName;
             const content = document.getElementById('wish-text').value;
             if (!content) return alert("請寫下願望內容");
 
             push(wishesRef, {
                 author, content, likes: 0,
+                uid: currentUser.uid, // 紀錄使用者 ID
                 date: new Date().toLocaleDateString(),
                 color: getRandomHexColor(),
                 rotate: getRandomRotate()
             }).then(() => {
                 document.getElementById('wish-text').value = '';
-                document.getElementById('author-name').value = '';
             });
         };
 
@@ -145,26 +193,14 @@
             let likes = parseInt(currentLikes) || 0;
             let likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
             const index = likedWishes.indexOf(id);
-            const btn = document.getElementById(`like-btn-${id}`);
-
-            if (index === -1) {
-                // 按讚
-                likedWishes.push(id);
-                likes += 1;
-                if(btn) btn.classList.add('active');
-            } else {
-                // 取消
-                likedWishes.splice(index, 1);
-                likes = Math.max(0, likes - 1);
-                if(btn) btn.classList.remove('active');
-            }
-
+            if (index === -1) { likedWishes.push(id); likes += 1; } 
+            else { likedWishes.splice(index, 1); likes = Math.max(0, likes - 1); }
             localStorage.setItem('likedWishes', JSON.stringify(likedWishes));
             update(ref(db, `wishes/${id}`), { likes: likes });
         };
 
         window.leaveComment = function(id) {
-            const user = prompt("你的名字？") || "匿名者";
+            const user = (currentUser ? currentUser.displayName : prompt("你的名字？")) || "匿名者";
             const text = prompt("想說些什麼？");
             if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
         };
@@ -173,12 +209,10 @@
             const bgm = document.getElementById('bgm-player');
             const musicBtn = document.getElementById('music-toggle');
             if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
-            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先點擊頁面再開啟")); }
+            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先與頁面互動")); }
         };
 
-        function getRandomHexColor() {
-            return ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff3e0'][Math.floor(Math.random() * 5)];
-        }
+        function getRandomHexColor() { return ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff3e0'][Math.floor(Math.random() * 5)]; }
         function getRandomRotate() { return Math.floor(Math.random() * 6) - 3; }
     </script>
 </body>

@@ -41,4 +41,186 @@
         /* 繪馬牆排列 - 復刻截圖 2 */
         #ema-board { 
             display: grid; 
-            grid-template-columns: repeat(
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 40px; width: 100%; max-width: 1300px; 
+        }
+        .ema-container { width: 300px; height: 210px; margin: 0 auto; position: relative; }
+        
+        /* 繪馬形狀比例 - 屋頂角度調緩 */
+        .ema-front { 
+            position: absolute; width: 100%; height: 100%; 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%); 
+            padding: 45px 20px 15px; box-sizing: border-box; 
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .meta-name { font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 8px; width: 100%; text-align: left; }
+        .wish-text { 
+            font-size: 1.15em; font-weight: 800; text-align: center; color: #222;
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            line-height: 1.4; word-break: break-all;
+        }
+
+        .footer { 
+            width: 100%; display: flex; justify-content: space-between; align-items: center; 
+            font-size: 0.75em; color: #666; font-weight: bold; margin-top: 5px;
+        }
+
+        /* 點讚橢圓膠囊樣式 - 復刻截圖 2 */
+        .like-pill {
+            background: #ff5252; color: white; border-radius: 20px;
+            padding: 4px 12px; display: flex; align-items: center; gap: 4px;
+            cursor: pointer; box-shadow: 0 2px 6px rgba(255,82,82,0.4);
+        }
+
+        /* 聊天室視窗 */
+        #chat-window { 
+            position: fixed; bottom: 20px; right: 20px; width: 300px; height: 400px; 
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
+            border: 2px solid var(--shrine-red); border-radius: 12px; 
+            display: flex; flex-direction: column; z-index: 9999; 
+        }
+        #chat-header { padding: 12px; color: white; background: var(--shrine-red); cursor: move; text-align: center; font-weight: bold; border-radius: 10px 10px 0 0; }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; color: white; font-size: 0.85em; display: flex; flex-direction: column; gap: 5px; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #444; display: flex; flex-direction: column; gap: 5px; }
+        #chat-input { background: #222; border: 1px solid #555; color: white; padding: 8px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container"><header><h1>⛩️ 許願牆 ⛩️</h1></header></div>
+    
+    <div class="input-card">
+        <input type="text" id="nickname" class="nickname-input" placeholder="想要顯示的名號 (選填)">
+        <textarea id="content" placeholder="在此誠心寫下您的願望..."></textarea>
+        <button class="submit-btn" id="submit-btn" onclick="window.submitWish()">奉納願望</button>
+    </div>
+
+    <div id="ema-board"></div>
+
+    <div id="chat-window">
+        <div id="chat-header">✥ 交流處 (可拖動)</div>
+        <div id="chat-messages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-user-name" placeholder="您的稱呼" style="background:#333; color:white; border:none; padding:5px; border-radius:4px;">
+            <input type="text" id="chat-input" placeholder="說點什麼..." onkeypress="if(event.key==='Enter') window.sendChat()">
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, runTransaction, limitToLast, query } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
+            authDomain: "webhw-eca0a.firebaseapp.com",
+            projectId: "webhw-eca0a",
+            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", 
+            storageBucket: "webhw-eca0a.firebasestorage.app",
+            messagingSenderId: "334763145278",
+            appId: "1:334763145278:web:fee884425309a3e471b96f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const wishesRef = ref(db, 'wishes');
+        const chatRef = ref(db, 'chat');
+
+        function sanitize(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+
+        function startTimer() {
+            const btn = document.getElementById('submit-btn');
+            const last = localStorage.getItem('shrine_cooldown');
+            if (last) {
+                const diff = Date.now() - parseInt(last);
+                if (diff < 300000) {
+                    const rem = Math.ceil((300000 - diff) / 1000);
+                    btn.disabled = true;
+                    btn.innerText = `${Math.floor(rem/60)}:${(rem%60).toString().padStart(2,'0')}`;
+                    setTimeout(startTimer, 1000);
+                    return;
+                }
+            }
+            btn.disabled = false;
+            btn.innerText = "奉納願望";
+        }
+        startTimer();
+
+        onValue(wishesRef, (snapshot) => {
+            const board = document.getElementById('ema-board');
+            board.innerHTML = '';
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).reverse().forEach(key => {
+                    const w = data[key];
+                    const div = document.createElement('div');
+                    div.className = 'ema-container';
+                    div.innerHTML = `
+                        <div class="ema-front" style="background-color:${w.color || '#fff9c4'};">
+                            <div class="meta-name">${sanitize(w.nickname)}</div>
+                            <div class="wish-text">${sanitize(w.content)}</div>
+                            <div class="footer">
+                                <span>${w.date}</span>
+                                <div class="like-pill" onclick="window.like('${key}')">❤️ ${w.likes || 0}</div>
+                            </div>
+                        </div>`;
+                    board.appendChild(div);
+                });
+            }
+        });
+
+        onValue(query(chatRef, limitToLast(40)), (snap) => {
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '';
+            const val = snap.val();
+            if(val) Object.values(val).forEach(m => {
+                const d = document.createElement('div');
+                d.innerHTML = `<b>${sanitize(m.user)}:</b> ${sanitize(m.text)}`;
+                box.appendChild(d);
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+
+        window.submitWish = () => {
+            const text = document.getElementById('content').value.trim();
+            if (!text) return;
+            push(wishesRef, {
+                nickname: document.getElementById('nickname').value || "無名氏",
+                content: text, likes: 0, date: new Date().toLocaleDateString(),
+                color: ['#ffcdd2', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff9c4'][Math.floor(Math.random()*5)]
+            }).then(() => {
+                localStorage.setItem('shrine_cooldown', Date.now());
+                startTimer();
+                document.getElementById('content').value = '';
+            });
+        };
+
+        window.like = (id) => {
+            runTransaction(ref(db, `wishes/${id}`), (w) => {
+                if (w) w.likes = (w.likes || 0) + 1;
+                return w;
+            });
+        };
+
+        window.sendChat = () => {
+            const input = document.getElementById('chat-input');
+            const nick = document.getElementById('chat-user-name').value || "訪客";
+            if(!input.value.trim()) return;
+            push(chatRef, { user: nick, text: input.value.trim() });
+            input.value = '';
+        };
+
+        const header = document.getElementById('chat-header');
+        const win = document.getElementById('chat-window');
+        let isDragging = false, offset = [0,0];
+        header.onmousedown = (e) => { isDragging = true; offset = [win.offsetLeft - e.clientX, win.offsetTop - e.clientY]; };
+        document.onmousemove = (e) => { if(isDragging) { win.style.left=(e.clientX+offset[0])+'px'; win.style.top=(e.clientY+offset[1])+'px'; win.style.bottom='auto'; win.style.right='auto'; }};
+        document.onmouseup = () => isDragging = false;
+    </script>
+</body>
+</html>

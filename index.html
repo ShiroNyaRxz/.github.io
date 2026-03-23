@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⛩️ 許願牆 (實名限讚版) ⛩️</title>
+    <title>⛩️ 誠心許願牆 ⛩️</title>
     <style>
-        /* 保留原本的所有 CSS 樣式 */
-        :root { --shrine-red: #ff4d4d; --text-color: #3e2723; }
+        :root { --shrine-red: #ff4d4d; --text-color: #3e2723; --gray: #888; }
         body {
             font-family: "Noto Sans TC", sans-serif;
             background-color: #1a1a1a;
@@ -14,28 +13,40 @@
             background-size: cover; background-position: center; background-attachment: fixed;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
+        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
         header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
-        .auth-section { margin-bottom: 20px; text-align: center; color: white; }
-        .login-btn { background: white; color: #444; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; margin: 0 auto; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .user-info { display: none; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); padding: 8px 15px; border-radius: 30px; backdrop-filter: blur(5px); }
-        .user-info img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; }
-        .input-section { display: none; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 40px; width: 100%; max-width: 450px; }
-        .nickname-input { width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        textarea { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; min-height: 80px; }
-        .primary-btn { background: var(--shrine-red); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #ema-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 35px; width: 100%; max-width: 1200px; }
+        
+        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
+        
+        /* 輸入區樣式 */
+        .input-section { 
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); 
+            padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            margin-bottom: 40px; width: 100%; max-width: 450px; 
+        }
+        .nickname-input { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1em; background: #fffdf0; }
+        textarea { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; resize: none; min-height: 80px; }
+        
+        /* 按鈕樣式與冷卻狀態 */
+        .primary-btn { background: var(--shrine-red); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em; transition: 0.3s; }
+        .primary-btn:disabled { background: var(--gray); cursor: not-allowed; opacity: 0.7; }
+        .primary-btn:hover:not(:disabled) { background: #e63939; transform: translateY(-2px); }
+        
+        /* 許願卡片佈局 */
+        #ema-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 35px; width: 100%; max-width: 1200px; padding-bottom: 50px; }
         .ema-container { width: 280px; height: 200px; position: relative; margin: 0 auto; }
         .ema-card { width: 100%; height: 100%; position: relative; transition: transform 0.8s; transform-style: preserve-3d; cursor: pointer; }
         .ema-card.is-flipped { transform: rotateY(180deg) !important; }
         .ema-front, .ema-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
-        .ema-front { z-index: 2; }
+        .ema-front { z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .ema-back { transform: rotateY(180deg); filter: brightness(0.92); }
-        .meta-top { font-size: 0.8em; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; }
-        .wish-content { font-size: 1.1em; font-weight: bold; text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .footer-actions { display: flex; justify-content: space-between; align-items: center; }
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.3s; }
-        .small-btn.active { background: #ff4d4d !important; color: white !important; }
+        .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.7); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; font-weight: bold; }
+        .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; line-height: 1.4; }
+        .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        
+        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 4px; }
+        .small-btn.active { background: #ff4d4d !important; color: white !important; transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -47,21 +58,12 @@
         <button id="music-toggle" onclick="window.toggleMusic()">靜</button>
     </div>
 
-    <div class="auth-section">
-        <button id="login-btn" class="login-btn" onclick="window.login()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Google 登入後許願/點讚
-        </button>
-        <div id="user-info" class="user-info">
-            <img id="user-pic" src="">
-            <span id="user-display-name"></span>
-            <button class="small-btn" style="color:white; background:rgba(0,0,0,0.3)" onclick="window.logout()">登出</button>
-        </div>
-    </div>
+    <div class="sub-title">誠心奉納願望｜每五分鐘限許一願</div>
 
-    <div class="input-section" id="wish-input-area">
-        <input type="text" id="custom-nickname" class="nickname-input" placeholder="想要顯示的自定義暱稱 (選填)">
-        <textarea id="wish-text" rows="3" placeholder="請在此輸入您的願望..."></textarea>
-        <button class="primary-btn" onclick="window.addNewWish()">正式奉納 (掛上願望)</button>
+    <div class="input-section">
+        <input type="text" id="custom-nickname" class="nickname-input" placeholder="您的名號 (選填)">
+        <textarea id="wish-text" rows="3" placeholder="請在此誠心寫下您的願望..."></textarea>
+        <button class="primary-btn" id="submit-wish-btn" onclick="window.addNewWish()">奉納願望</button>
     </div>
 
     <div id="ema-board"></div>
@@ -69,11 +71,157 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
             projectId: "webhw-eca0a",
             databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", 
-            storageBucket: "
+            storageBucket: "webhw-eca0a.firebasestorage.app",
+            messagingSenderId: "334763145278",
+            appId: "1:334763145278:web:fee884425309a3e471b96f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const wishesRef = ref(db, 'wishes');
+
+        // --- 防刷讚：設備 ID ---
+        let deviceId = localStorage.getItem('shrine_device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('shrine_device_id', deviceId);
+        }
+
+        // --- 核心：五分鐘冷卻計時器功能 ---
+        function updateCooldown() {
+            const btn = document.getElementById('submit-wish-btn');
+            const lastPostTime = localStorage.getItem('last_post_time');
+            const cooldownPeriod = 5 * 60 * 1000; // 5分鐘
+
+            if (lastPostTime) {
+                const now = Date.now();
+                const diff = now - parseInt(lastPostTime);
+
+                if (diff < cooldownPeriod) {
+                    const remaining = Math.ceil((cooldownPeriod - diff) / 1000);
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    btn.disabled = true;
+                    btn.innerText = `冷卻中 (${mins}:${secs < 10 ? '0' : ''}${secs})`;
+                    setTimeout(updateCooldown, 1000); // 每一秒更新一次
+                    return;
+                }
+            }
+            btn.disabled = false;
+            btn.innerText = "正式奉納願望";
+        }
+
+        // 初始化檢查一次冷卻時間
+        updateCooldown();
+
+        // 監測願望牆資料
+        onValue(wishesRef, (snapshot) => {
+            const board = document.getElementById('ema-board');
+            if (!board) return;
+            board.innerHTML = '';
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).reverse().forEach(key => {
+                    const wish = data[key];
+                    const isLiked = wish.voters && wish.voters[deviceId];
+                    renderSingleWish(board, key, wish, isLiked);
+                });
+            }
+        });
+
+        function renderSingleWish(board, id, wish, isLiked) {
+            const container = document.createElement('div');
+            container.className = 'ema-container';
+            const displayLikes = wish.likes || 0;
+
+            container.innerHTML = `
+                <div class="ema-card" onclick="this.classList.toggle('is-flipped')">
+                    <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
+                        <div class="meta-top">祈願人：${wish.nickname || '無名氏'}</div>
+                        <div class="wish-content">「${wish.content}」</div>
+                        <div class="footer-actions">
+                            <span style="font-size: 0.7em;">${wish.date}</span>
+                            <button class="small-btn ${isLiked ? 'active' : ''}" 
+                                onclick="event.stopPropagation(); window.handleLike('${id}')">
+                                ❤️ <span class="like-count">${displayLikes}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
+                        <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
+                        <div style="flex-grow:1; font-size:0.8em; overflow-y:auto; margin-top:5px;">
+                             ${wish.comments ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') : '尚未有回饋...'}
+                        </div>
+                        <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); window.leaveComment('${id}')">我也要留言</button>
+                    </div>
+                </div>
+            `;
+            board.appendChild(container);
+        }
+
+        // --- 發布願望 (含冷卻檢查) ---
+        window.addNewWish = function() {
+            const nickname = document.getElementById('custom-nickname').value.trim() || "無名氏";
+            const content = document.getElementById('wish-text').value;
+            
+            if (!content) return alert("請寫下願望內容");
+
+            // 發送至 Firebase
+            push(wishesRef, {
+                nickname: nickname,
+                content: content,
+                likes: 0,
+                voters: {},
+                date: new Date().toLocaleDateString(),
+                color: ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9'][Math.floor(Math.random() * 4)],
+                rotate: Math.floor(Math.random() * 6) - 3
+            }).then(() => {
+                // 成功後設定冷卻時間
+                localStorage.setItem('last_post_time', Date.now());
+                updateCooldown();
+                
+                document.getElementById('wish-text').value = '';
+                document.getElementById('custom-nickname').value = '';
+                alert("願望已奉納！");
+            });
+        };
+
+        // --- 點讚 (防刷) ---
+        window.handleLike = function(wishId) {
+            const wishRef = ref(db, `wishes/${wishId}`);
+            runTransaction(wishRef, (wish) => {
+                if (wish) {
+                    if (!wish.voters) wish.voters = {};
+                    if (wish.voters[deviceId]) {
+                        wish.likes = (wish.likes || 1) - 1;
+                        delete wish.voters[deviceId];
+                    } else {
+                        wish.likes = (wish.likes || 0) + 1;
+                        wish.voters[deviceId] = true;
+                    }
+                }
+                return wish;
+            });
+        };
+
+        window.leaveComment = function(id) {
+            const user = prompt("您的名號？") || "訪客";
+            const text = prompt("留下一句溫暖的話吧：");
+            if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
+        };
+
+        window.toggleMusic = function() {
+            const bgm = document.getElementById('bgm-player');
+            const musicBtn = document.getElementById('music-toggle');
+            if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
+            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請點擊頁面再播放")); }
+        };
+    </script>
+</body>
+</html>

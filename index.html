@@ -36,19 +36,10 @@
         .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         
-        /* 點讚按鈕 */
-        .small-btn { 
-            background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; 
-            font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            display: flex; align-items: center; gap: 4px; 
-        }
-        .small-btn.active { 
-            background: #ff4d4d !important; 
-            color: white !important; 
-            transform: scale(1.1); 
-            box-shadow: 0 2px 10px rgba(255, 77, 77, 0.5); 
-        }
-        .small-btn:active { transform: scale(0.9); }
+        /* 點讚按鈕優化 */
+        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 4px; border: 1px solid transparent; }
+        .small-btn.active { background: #ff4d4d; color: white; transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 77, 77, 0.4); border-color: #ffcccc; }
+        .small-btn:active { transform: scale(0.9); } /* 點擊時縮小 */
     </style>
 </head>
 <body>
@@ -57,14 +48,14 @@
 
     <div class="header-container">
         <header><h1>⛩️ 許願牆 ⛩️</h1></header>
-        <button id="music-toggle" onclick="window.toggleMusic()">靜</button>
+        <button id="music-toggle" onclick="toggleMusic()">靜</button>
     </div>
     <div class="sub-title">留下你的願望，說不定會實現喔！</div>
 
     <div class="input-section">
         <input type="text" id="author-name" placeholder="你的大名">
         <textarea id="wish-text" rows="3" placeholder="寫下你的願望..."></textarea>
-        <button class="primary-btn" onclick="window.addNewWish()">奉納 (掛上願望)</button>
+        <button class="primary-btn" onclick="addNewWish()">奉納 (掛上願望)</button>
     </div>
 
     <div id="ema-board"></div>
@@ -73,7 +64,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-        // --- Firebase 配置 ---
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
@@ -88,28 +78,23 @@
         const db = getDatabase(app);
         const wishesRef = ref(db, 'wishes');
 
-        // --- 核心：監測資料庫 ---
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
             if (!board) return;
-            
+            board.innerHTML = '';
             const data = snapshot.val();
-            board.innerHTML = ''; 
-            
             if (data) {
-                const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
-                Object.keys(data).reverse().forEach(key => {
-                    const wish = data[key];
-                    const isLiked = likedWishes.includes(key);
-                    renderSingleWish(board, key, wish, isLiked);
-                });
+                Object.keys(data).reverse().forEach(key => renderSingleWish(board, key, data[key]));
             }
         });
 
-        function renderSingleWish(board, id, wish, isLiked) {
+        function renderSingleWish(board, id, wish) {
             const container = document.createElement('div');
             container.className = 'ema-container';
-            const displayLikes = parseInt(wish.likes) || 0;
+            
+            const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
+            const isLiked = likedWishes.includes(id);
+            const displayLikes = parseInt(wish.likes) || 0; // 強制轉數字防呆
 
             const commentsHtml = wish.comments 
                 ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
@@ -140,8 +125,6 @@
             board.appendChild(container);
         }
 
-        // --- 將函式掛載到 window，解決 ReferenceError ---
-
         window.addNewWish = function() {
             const author = document.getElementById('author-name').value || "無名氏";
             const content = document.getElementById('wish-text').value;
@@ -162,13 +145,18 @@
             let likes = parseInt(currentLikes) || 0;
             let likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
             const index = likedWishes.indexOf(id);
+            const btn = document.getElementById(`like-btn-${id}`);
 
             if (index === -1) {
+                // 按讚
                 likedWishes.push(id);
                 likes += 1;
+                if(btn) btn.classList.add('active');
             } else {
+                // 取消
                 likedWishes.splice(index, 1);
                 likes = Math.max(0, likes - 1);
+                if(btn) btn.classList.remove('active');
             }
 
             localStorage.setItem('likedWishes', JSON.stringify(likedWishes));
@@ -184,12 +172,8 @@
         window.toggleMusic = function() {
             const bgm = document.getElementById('bgm-player');
             const musicBtn = document.getElementById('music-toggle');
-            if (!bgm.paused) { 
-                bgm.pause(); 
-                musicBtn.innerText = '靜'; 
-            } else { 
-                bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先與頁面互動")); 
-            }
+            if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
+            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先點擊頁面再開啟")); }
         };
 
         function getRandomHexColor() {

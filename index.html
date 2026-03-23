@@ -70,8 +70,7 @@
 
         // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const wishesRef = ref(db, 'wishes');
+        const analytics = getAnalytics(app);
 
         // --- 核心：實時監測資料庫並顯示 ---
         onValue(wishesRef, (snapshot) => {

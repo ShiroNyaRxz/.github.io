@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⛩️ 許願牆 ⛩️</title>
     <style>
-        :root { --shrine-red: #ff4d4d; --text-color: #3e2723; }
+        :root { --shrine-red: #ff4d4d; }
         body {
             font-family: "Noto Sans TC", sans-serif;
-            background-color: #1a1a1a;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('image_58724d.jpg');
+            background-color: #1a1a1a; 
+            /* 修正：將檔名更改為「夜景.jpg」 */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('夜景.jpg');
             background-size: cover; background-position: center; background-attachment: fixed;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
 
-        /* 標題與輸入框 */
         .header-container { border-bottom: 3px solid var(--shrine-red); margin-bottom: 30px; }
-        header h1 { color: white; margin: 10px; font-size: 2em; letter-spacing: 5px; }
+        header h1 { color: white; margin: 10px; font-size: 2em; letter-spacing: 5px; text-shadow: 0 0 8px rgba(255,0,0,0.6); }
 
+        /* 輸入框區塊樣式 - 復刻截圖 1 & 3 */
         .input-card { 
             background: #f8f8f8; padding: 25px; border-radius: 20px; 
             width: 100%; max-width: 480px; margin-bottom: 50px; 
@@ -28,50 +29,16 @@
             border-radius: 10px; box-sizing: border-box; font-size: 1.1em; background: #fffdf5; 
         }
         textarea { resize: none; min-height: 120px; }
+        
+        /* 奉納按鈕樣式 - 復刻截圖 1 的深灰色冷卻狀態 */
         .submit-btn { 
             background: #555555; color: white; border: none; padding: 18px; 
             width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.3em;
+            transition: background 0.3s;
         }
         .submit-btn:not(:disabled) { background: #ff5252; }
 
-        /* 繪馬牆排版 */
+        /* 繪馬牆排列 - 復刻截圖 2 */
         #ema-board { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-            gap: 40px; width: 100%; max-width: 1300px; 
-        }
-        .ema-container { width: 320px; height: 220px; margin: 0 auto; position: relative; }
-        .ema-card { width: 100%; height: 100%; position: relative; cursor: pointer; }
-        
-        /* 繪馬造型修正 (屋頂角度較緩) */
-        .ema-front { 
-            position: absolute; width: 100%; height: 100%; 
-            clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%); 
-            padding: 50px 20px 15px; box-sizing: border-box; 
-            display: flex; flex-direction: column; align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .meta-name { font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 10px; }
-        .wish-text { 
-            font-size: 1.2em; font-weight: 800; text-align: center; color: #222;
-            flex-grow: 1; display: flex; align-items: center; justify-content: center;
-            line-height: 1.4; word-break: break-all;
-        }
-
-        /* 底部資訊欄 */
-        .footer { 
-            width: 100%; display: flex; justify-content: space-between; align-items: center; 
-            font-size: 0.8em; color: #666; font-weight: bold; margin-top: 5px;
-        }
-
-        /* 點讚按鈕 (復刻截圖中的橢圓膠囊樣式) */
-        .like-pill {
-            background: #ff5252; color: white; border-radius: 20px;
-            padding: 4px 12px; display: flex; align-items: center; gap: 5px;
-            box-shadow: 0 2px 5px rgba(255,82,82,0.4);
-        }
-
-        /* 聊天室視窗 (保持可拖動) */
-        #chat-window { 
-            position: fixed; bottom: 20px; right:
+            grid-template-columns: repeat(

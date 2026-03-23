@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⛩️ 誠心許願牆 ⛩️</title>
+    <title>⛩️ 安全防護許願牆 ⛩️</title>
     <style>
         :root { --shrine-red: #ff4d4d; --text-color: #3e2723; --gray: #888; }
         body {
@@ -15,54 +15,44 @@
         }
         .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; }
         header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
-        
-        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
         
-        /* 輸入區樣式 */
+        /* 輸入區 */
         .input-section { 
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); 
             padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
             margin-bottom: 40px; width: 100%; max-width: 450px; 
         }
-        .nickname-input { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1em; background: #fffdf0; }
-        textarea { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; resize: none; min-height: 80px; }
-        
-        /* 按鈕樣式與冷卻狀態 */
+        .nickname-input, textarea { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
         .primary-btn { background: var(--shrine-red); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em; transition: 0.3s; }
-        .primary-btn:disabled { background: var(--gray); cursor: not-allowed; opacity: 0.7; }
-        .primary-btn:hover:not(:disabled) { background: #e63939; transform: translateY(-2px); }
-        
-        /* 許願卡片佈局 */
+        .primary-btn:disabled { background: var(--gray); cursor: not-allowed; }
+
+        /* 許願卡片 */
         #ema-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 35px; width: 100%; max-width: 1200px; padding-bottom: 50px; }
         .ema-container { width: 280px; height: 200px; position: relative; margin: 0 auto; }
-        .ema-card { width: 100%; height: 100%; position: relative; transition: transform 0.8s; transform-style: preserve-3d; cursor: pointer; }
+        .ema-card { width: 100%; height: 100%; position: relative; transition: transform 0.8s; transform-style: preserve-3d; cursor: pointer; border-radius: 0 0 10px 10px; }
         .ema-card.is-flipped { transform: rotateY(180deg) !important; }
         .ema-front, .ema-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .ema-front { z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .ema-back { transform: rotateY(180deg); filter: brightness(0.92); }
-        .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.7); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; font-weight: bold; }
-        .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; line-height: 1.4; }
+        .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.7); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; word-break: break-all; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 4px; }
-        .small-btn.active { background: #ff4d4d !important; color: white !important; transform: scale(1.1); }
+        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        .small-btn.active { background: #ff4d4d !important; color: white !important; }
     </style>
 </head>
 <body>
 
-    <audio id="bgm-player" src="bgm.mp3" loop></audio>
-
     <div class="header-container">
-        <header><h1>⛩️ 許願牆 ⛩️</h1></header>
-        <button id="music-toggle" onclick="window.toggleMusic()">靜</button>
+        <header><h1>⛩️ 安全許願牆 ⛩️</h1></header>
     </div>
 
-    <div class="sub-title">誠心奉納願望｜每五分鐘限許一願</div>
+    <div class="sub-title">已啟動 XSS 防護系統｜每五分鐘限許一願</div>
 
     <div class="input-section">
-        <input type="text" id="custom-nickname" class="nickname-input" placeholder="您的名號 (選填)">
-        <textarea id="wish-text" rows="3" placeholder="請在此誠心寫下您的願望..."></textarea>
+        <input type="text" id="custom-nickname" class="nickname-input" placeholder="您的名號 (限15字)" maxlength="15">
+        <textarea id="wish-text" rows="3" placeholder="請在此誠心寫下您的願望 (限100字)..." maxlength="100"></textarea>
         <button class="primary-btn" id="submit-wish-btn" onclick="window.addNewWish()">奉納願望</button>
     </div>
 
@@ -86,44 +76,37 @@
         const db = getDatabase(app);
         const wishesRef = ref(db, 'wishes');
 
-        // --- 防刷讚：設備 ID ---
-        let deviceId = localStorage.getItem('shrine_device_id');
-        if (!deviceId) {
-            deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('shrine_device_id', deviceId);
+        // --- 防禦核心：HTML 轉義函式 ---
+        function sanitize(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
         }
 
-        // --- 核心：五分鐘冷卻計時器功能 ---
+        let deviceId = localStorage.getItem('shrine_device_id') || ('dev_' + Math.random().toString(36).substr(2, 9));
+        localStorage.setItem('shrine_device_id', deviceId);
+
         function updateCooldown() {
             const btn = document.getElementById('submit-wish-btn');
             const lastPostTime = localStorage.getItem('last_post_time');
-            const cooldownPeriod = 5 * 60 * 1000; // 5分鐘
-
+            const cooldown = 5 * 60 * 1000;
             if (lastPostTime) {
-                const now = Date.now();
-                const diff = now - parseInt(lastPostTime);
-
-                if (diff < cooldownPeriod) {
-                    const remaining = Math.ceil((cooldownPeriod - diff) / 1000);
-                    const mins = Math.floor(remaining / 60);
-                    const secs = remaining % 60;
+                const diff = Date.now() - parseInt(lastPostTime);
+                if (diff < cooldown) {
+                    const rem = Math.ceil((cooldown - diff) / 1000);
                     btn.disabled = true;
-                    btn.innerText = `冷卻中 (${mins}:${secs < 10 ? '0' : ''}${secs})`;
-                    setTimeout(updateCooldown, 1000); // 每一秒更新一次
+                    btn.innerText = `冷卻中 (${Math.floor(rem/60)}:${(rem%60).toString().padStart(2,'0')})`;
+                    setTimeout(updateCooldown, 1000);
                     return;
                 }
             }
             btn.disabled = false;
             btn.innerText = "正式奉納願望";
         }
-
-        // 初始化檢查一次冷卻時間
         updateCooldown();
 
-        // 監測願望牆資料
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
-            if (!board) return;
             board.innerHTML = '';
             const data = snapshot.val();
             if (data) {
@@ -138,43 +121,57 @@
         function renderSingleWish(board, id, wish, isLiked) {
             const container = document.createElement('div');
             container.className = 'ema-container';
-            const displayLikes = wish.likes || 0;
+            
+            // 安全處理：先轉義所有來自資料庫的字串
+            const safeNickname = sanitize(wish.nickname || '無名氏');
+            const safeContent = sanitize(wish.content || '');
+            const safeDate = sanitize(wish.date || '');
 
             container.innerHTML = `
                 <div class="ema-card" onclick="this.classList.toggle('is-flipped')">
                     <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
-                        <div class="meta-top">祈願人：${wish.nickname || '無名氏'}</div>
-                        <div class="wish-content">「${wish.content}」</div>
+                        <div class="meta-top">祈願人：${safeNickname}</div>
+                        <div class="wish-content">「${safeContent}」</div>
                         <div class="footer-actions">
-                            <span style="font-size: 0.7em;">${wish.date}</span>
-                            <button class="small-btn ${isLiked ? 'active' : ''}" 
-                                onclick="event.stopPropagation(); window.handleLike('${id}')">
-                                ❤️ <span class="like-count">${displayLikes}</span>
+                            <span style="font-size: 0.7em;">${safeDate}</span>
+                            <button class="small-btn ${isLiked ? 'active' : ''}" onclick="event.stopPropagation(); window.handleLike('${id}')">
+                                ❤️ <span class="like-count">${wish.likes || 0}</span>
                             </button>
                         </div>
                     </div>
                     <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
                         <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
-                        <div style="flex-grow:1; font-size:0.8em; overflow-y:auto; margin-top:5px;">
-                             ${wish.comments ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') : '尚未有回饋...'}
-                        </div>
+                        <div style="flex-grow:1; font-size:0.8em; overflow-y:auto; margin-top:5px;" id="comments-${id}"></div>
                         <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); window.leaveComment('${id}')">我也要留言</button>
                     </div>
                 </div>
             `;
             board.appendChild(container);
+
+            // 留言部分也使用安全方式渲染
+            const commentBox = document.getElementById(`comments-${id}`);
+            if (wish.comments) {
+                Object.values(wish.comments).forEach(c => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '3px';
+                    const b = document.createElement('b');
+                    b.textContent = c.user + ': '; // 安全賦值
+                    div.appendChild(b);
+                    div.append(document.createTextNode(c.text)); // 安全賦值
+                    commentBox.appendChild(div);
+                });
+            } else {
+                commentBox.textContent = '尚未有回饋...';
+            }
         }
 
-        // --- 發布願望 (含冷卻檢查) ---
         window.addNewWish = function() {
-            const nickname = document.getElementById('custom-nickname').value.trim() || "無名氏";
-            const content = document.getElementById('wish-text').value;
-            
-            if (!content) return alert("請寫下願望內容");
+            const nickname = document.getElementById('custom-nickname').value.trim();
+            const content = document.getElementById('wish-text').value.trim();
+            if (!content) return alert("請輸入願望內容");
 
-            // 發送至 Firebase
             push(wishesRef, {
-                nickname: nickname,
+                nickname: nickname || "無名氏",
                 content: content,
                 likes: 0,
                 voters: {},
@@ -182,45 +179,28 @@
                 color: ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9'][Math.floor(Math.random() * 4)],
                 rotate: Math.floor(Math.random() * 6) - 3
             }).then(() => {
-                // 成功後設定冷卻時間
                 localStorage.setItem('last_post_time', Date.now());
                 updateCooldown();
-                
                 document.getElementById('wish-text').value = '';
                 document.getElementById('custom-nickname').value = '';
-                alert("願望已奉納！");
             });
         };
 
-        // --- 點讚 (防刷) ---
-        window.handleLike = function(wishId) {
-            const wishRef = ref(db, `wishes/${wishId}`);
-            runTransaction(wishRef, (wish) => {
+        window.handleLike = (id) => {
+            runTransaction(ref(db, `wishes/${id}`), (wish) => {
                 if (wish) {
-                    if (!wish.voters) wish.voters = {};
-                    if (wish.voters[deviceId]) {
-                        wish.likes = (wish.likes || 1) - 1;
-                        delete wish.voters[deviceId];
-                    } else {
-                        wish.likes = (wish.likes || 0) + 1;
-                        wish.voters[deviceId] = true;
-                    }
+                    wish.voters = wish.voters || {};
+                    if (wish.voters[deviceId]) { wish.likes--; delete wish.voters[deviceId]; }
+                    else { wish.likes = (wish.likes || 0) + 1; wish.voters[deviceId] = true; }
                 }
                 return wish;
             });
         };
 
-        window.leaveComment = function(id) {
+        window.leaveComment = (id) => {
             const user = prompt("您的名號？") || "訪客";
-            const text = prompt("留下一句溫暖的話吧：");
+            const text = prompt("留下一句溫暖的話：");
             if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
-        };
-
-        window.toggleMusic = function() {
-            const bgm = document.getElementById('bgm-player');
-            const musicBtn = document.getElementById('music-toggle');
-            if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
-            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請點擊頁面再播放")); }
         };
     </script>
 </body>

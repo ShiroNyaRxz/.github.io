@@ -1,127 +1,95 @@
 <script type="module">
-  // 1. 匯入必要的 Firebase SDK 功能
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
-  import { 
-    getDatabase, 
-    ref, 
-    push, 
-    onValue, 
-    update 
-  } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+  import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-  // 2. 你的新 Firebase 配置 (webhw-eca0a)
   const firebaseConfig = {
     apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
     authDomain: "webhw-eca0a.firebaseapp.com",
     projectId: "webhw-eca0a",
-    databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", // 請確認此處與你 Console 顯示的一致
+    databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", 
     storageBucket: "webhw-eca0a.firebasestorage.app",
     messagingSenderId: "334763145278",
-    appId: "1:334763145278:web:fee884425309a3e471b96f",
-    measurementId: "G-DX84SV6K8R"
+    appId: "1:334763145278:web:fee884425309a3e471b96f"
   };
 
-  // 3. 初始化 Firebase 相關服務
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
   const db = getDatabase(app);
   const wishesRef = ref(db, 'wishes');
 
-  // --- 核心邏輯：實時監測資料庫並渲染 ---
+  // 使用監聽更新
   onValue(wishesRef, (snapshot) => {
+    // 關鍵修正：在回調函數內部獲取元素，避免 null 錯誤
     const board = document.getElementById('ema-board');
-    if (!board) return;
     
-    board.innerHTML = '';
+    if (!board) {
+      console.warn("等待 HTML 元素載入中...");
+      return; 
+    }
+
+    board.innerHTML = ''; // 現在不會報 null 錯誤了
     const data = snapshot.val();
     
     if (data) {
-      // 將資料由新到舊排序
       Object.keys(data).reverse().forEach(key => {
-        renderSingleWish(key, data[key]);
+        const wish = data[key];
+        const container = document.createElement('div');
+        container.className = 'ema-container';
+        
+        const commentsHtml = wish.comments 
+          ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
+          : '尚未回覆...';
+
+        container.innerHTML = `
+          <div class="ema-card" style="transform: rotate(${wish.rotate || 0}deg);" onclick="this.classList.toggle('is-flipped')">
+            <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
+              <div class="meta-top">祈願人：${wish.author || '無名氏'}</div>
+              <div class="wish-content">「${wish.content}」</div>
+              <div class="footer-actions">
+                <span style="font-size: 0.7em;">${wish.date}</span>
+                <button class="small-btn" onclick="event.stopPropagation(); window.handleLike('${key}', ${wish.likes || 0})">❤️ <span>${wish.likes || 0}</span></button>
+              </div>
+            </div>
+            <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
+              <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
+              <div style="flex-grow:1; font-size:0.8em; overflow-y:auto; text-align:left; margin-top:5px;">
+                ${commentsHtml}
+              </div>
+              <button class="small-btn" style="background:var(--shrine-red); color:white; width:100%;" onclick="event.stopPropagation(); window.leaveComment('${key}')">我也要留言</button>
+            </div>
+          </div>`;
+        board.appendChild(container);
       });
     }
   });
 
-  // 渲染許願卡函式
-  function renderSingleWish(id, wish) {
-    const board = document.getElementById('ema-board');
-    const container = document.createElement('div');
-    container.className = 'ema-container';
-    
-    const commentsHtml = wish.comments 
-      ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
-      : '尚未有人留言...';
-
-    container.innerHTML = `
-      <div class="ema-card" style="transform: rotate(${wish.rotate}deg);" onclick="this.classList.toggle('is-flipped')">
-        <div class="ema-front" style="background-color: ${wish.color};">
-          <div class="meta-top">祈願人：${wish.author || '無名氏'}</div>
-          <div class="wish-content">「${wish.content}」</div>
-          <div class="footer-actions">
-            <span style="font-size: 0.7em;">${wish.date}</span>
-            <button class="small-btn" onclick="event.stopPropagation(); window.handleLike('${id}', ${wish.likes})">❤️ <span>${wish.likes || 0}</span></button>
-          </div>
-        </div>
-        <div class="ema-back" style="background-color: ${wish.color};">
-          <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
-          <div style="flex-grow:1; font-size:0.8em; overflow-y:auto; text-align:left; margin-top:5px;">
-            ${commentsHtml}
-          </div>
-          <button class="small-btn" style="background:var(--shrine-red); color:white; width:100%;" onclick="event.stopPropagation(); window.leaveComment('${id}')">我也要留言</button>
-        </div>
-      </div>`;
-    board.appendChild(container);
-  }
-
-  // --- 關鍵：將函式掛載到 window，讓 HTML 的 onclick 可以呼叫 ---
-
+  // 補齊 window 函式 (確保按鈕可用)
   window.addNewWish = function() {
     const author = document.getElementById('author-name').value || "無名氏";
     const content = document.getElementById('wish-text').value;
     if (!content) return alert("請寫下願望內容");
 
     push(wishesRef, {
-      author,
-      content,
-      likes: 0,
+      author, content, likes: 0,
       date: new Date().toLocaleDateString(),
       color: getRandomHexColor(),
       rotate: getRandomRotate()
     }).then(() => {
       document.getElementById('wish-text').value = '';
-      document.getElementById('author-name').value = '';
-    }).catch(err => alert("發布失敗，請檢查資料庫權限設定！"));
+    });
   };
 
   window.handleLike = function(id, currentLikes) {
-    update(ref(db, `wishes/${id}`), { likes: (currentLikes || 0) + 1 });
+    update(ref(db, `wishes/${id}`), { likes: currentLikes + 1 });
   };
 
   window.leaveComment = function(id) {
     const user = prompt("你的名字？") || "匿名者";
     const text = prompt("想說些什麼？");
-    if (text) {
-      push(ref(db, `wishes/${id}/comments`), { user, text });
-    }
+    if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
   };
 
-  window.toggleMusic = function() {
-    const bgm = document.getElementById('bgm-player');
-    const musicBtn = document.getElementById('music-toggle');
-    if (!bgm.paused) {
-      bgm.pause(); musicBtn.innerText = '🔇';
-    } else {
-      bgm.play().then(() => { musicBtn.innerText = '🔊'; }).catch(() => alert("請點擊頁面後再播放"));
-    }
-  };
-
-  // 工具函式
   function getRandomHexColor() {
-    const colors = ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff3e0']; // 柔和的色系
+    const colors = ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
-  function getRandomRotate() { return Math.floor(Math.random() * 6) - 3; }
-
-</script>
+  function getRandomRotate() { return

@@ -36,10 +36,20 @@
         .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         
-        /* 點讚按鈕優化 */
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 4px; border: 1px solid transparent; }
-        .small-btn.active { background: #ff4d4d; color: white; transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 77, 77, 0.4); border-color: #ffcccc; }
-        .small-btn:active { transform: scale(0.9); } /* 點擊時縮小 */
+        /* 點讚按鈕動畫與顏色 */
+        .small-btn { 
+            background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; 
+            font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; align-items: center; gap: 4px; 
+        }
+        /* 點讚後的狀態：變紅 */
+        .small-btn.active { 
+            background: #ff4d4d !important; 
+            color: white !important; 
+            transform: scale(1.1); 
+            box-shadow: 0 2px 10px rgba(255, 77, 77, 0.5); 
+        }
+        .small-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
@@ -66,120 +76,3 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
-            authDomain: "webhw-eca0a.firebaseapp.com",
-            projectId: "webhw-eca0a",
-            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", 
-            storageBucket: "webhw-eca0a.firebasestorage.app",
-            messagingSenderId: "334763145278",
-            appId: "1:334763145278:web:fee884425309a3e471b96f"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const wishesRef = ref(db, 'wishes');
-
-        onValue(wishesRef, (snapshot) => {
-            const board = document.getElementById('ema-board');
-            if (!board) return;
-            board.innerHTML = '';
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).reverse().forEach(key => renderSingleWish(board, key, data[key]));
-            }
-        });
-
-        function renderSingleWish(board, id, wish) {
-            const container = document.createElement('div');
-            container.className = 'ema-container';
-            
-            const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
-            const isLiked = likedWishes.includes(id);
-            const displayLikes = parseInt(wish.likes) || 0; // 強制轉數字防呆
-
-            const commentsHtml = wish.comments 
-                ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
-                : '尚未有回饋...';
-
-            container.innerHTML = `
-                <div class="ema-card" style="transform: rotate(${wish.rotate || 0}deg);" onclick="this.classList.toggle('is-flipped')">
-                    <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
-                        <div class="meta-top">祈願人：${wish.author || '無名氏'}</div>
-                        <div class="wish-content">「${wish.content}」</div>
-                        <div class="footer-actions">
-                            <span style="font-size: 0.7em;">${wish.date}</span>
-                            <button id="like-btn-${id}" class="small-btn ${isLiked ? 'active' : ''}" 
-                                onclick="event.stopPropagation(); window.handleLike('${id}', ${displayLikes})">
-                                ❤️ <span class="like-count">${displayLikes}</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
-                        <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
-                        <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">
-                            ${commentsHtml}
-                        </div>
-                        <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); window.leaveComment('${id}')">我也要留言</button>
-                    </div>
-                </div>
-            `;
-            board.appendChild(container);
-        }
-
-        window.addNewWish = function() {
-            const author = document.getElementById('author-name').value || "無名氏";
-            const content = document.getElementById('wish-text').value;
-            if (!content) return alert("請寫下願望內容");
-
-            push(wishesRef, {
-                author, content, likes: 0,
-                date: new Date().toLocaleDateString(),
-                color: getRandomHexColor(),
-                rotate: getRandomRotate()
-            }).then(() => {
-                document.getElementById('wish-text').value = '';
-                document.getElementById('author-name').value = '';
-            });
-        };
-
-        window.handleLike = function(id, currentLikes) {
-            let likes = parseInt(currentLikes) || 0;
-            let likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
-            const index = likedWishes.indexOf(id);
-            const btn = document.getElementById(`like-btn-${id}`);
-
-            if (index === -1) {
-                // 按讚
-                likedWishes.push(id);
-                likes += 1;
-                if(btn) btn.classList.add('active');
-            } else {
-                // 取消
-                likedWishes.splice(index, 1);
-                likes = Math.max(0, likes - 1);
-                if(btn) btn.classList.remove('active');
-            }
-
-            localStorage.setItem('likedWishes', JSON.stringify(likedWishes));
-            update(ref(db, `wishes/${id}`), { likes: likes });
-        };
-
-        window.leaveComment = function(id) {
-            const user = prompt("你的名字？") || "匿名者";
-            const text = prompt("想說些什麼？");
-            if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
-        };
-
-        window.toggleMusic = function() {
-            const bgm = document.getElementById('bgm-player');
-            const musicBtn = document.getElementById('music-toggle');
-            if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
-            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先點擊頁面再開啟")); }
-        };
-
-        function getRandomHexColor() {
-            return ['#fff9c4', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff3e0'][Math.floor(Math.random() * 5)];
-        }
-        function getRandomRotate() { return Math.floor(Math.random() * 6) - 3; }
-    </script>
-</body>
-</html>

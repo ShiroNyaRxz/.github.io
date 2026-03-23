@@ -9,229 +9,69 @@
         body {
             font-family: "Noto Sans TC", sans-serif;
             background-color: #1a1a1a;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{6CD98B26-26E2-4755-9EB0-2E58BA27957B}.jpg');
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('image_58724d.jpg');
             background-size: cover; background-position: center; background-attachment: fixed;
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden;
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .header-container { border-bottom: 5px double var(--shrine-red); padding-bottom: 10px; margin-bottom: 20px; }
-        header h1 { color: white; margin: 0; text-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
+
+        /* 標題與輸入框 */
+        .header-container { border-bottom: 3px solid var(--shrine-red); margin-bottom: 30px; }
+        header h1 { color: white; margin: 10px; font-size: 2em; letter-spacing: 5px; }
+
         .input-card { 
-            background: rgba(245, 245, 245, 0.95); padding: 25px; border-radius: 15px; 
-            width: 100%; max-width: 450px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #f8f8f8; padding: 25px; border-radius: 20px; 
+            width: 100%; max-width: 480px; margin-bottom: 50px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         .nickname-input, textarea { 
-            width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; 
-            border-radius: 8px; box-sizing: border-box; font-size: 1em; background: #fffdf5; 
+            width: 100%; margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; 
+            border-radius: 10px; box-sizing: border-box; font-size: 1.1em; background: #fffdf5; 
         }
-        ::placeholder { color: #888; }
-        textarea { resize: none; min-height: 100px; }
+        textarea { resize: none; min-height: 120px; }
         .submit-btn { 
-            background: #555; color: white; border: none; padding: 15px; 
-            width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.2em; 
+            background: #555555; color: white; border: none; padding: 18px; 
+            width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.3em;
         }
-        .submit-btn:not(:disabled) { background: var(--shrine-red); }
-        #ema-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 35px; width: 100%; max-width: 1200px; }
-        .ema-container { width: 280px; height: 200px; margin: 0 auto; }
-        .ema-card { width: 100%; height: 100%; position: relative; transition: transform 0.8s; transform-style: preserve-3d; cursor: pointer; }
-        .ema-card.is-flipped { transform: rotateY(180deg); }
-        .ema-front, .ema-back { 
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; 
-            clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); 
-            padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; 
+        .submit-btn:not(:disabled) { background: #ff5252; }
+
+        /* 繪馬牆排版 */
+        #ema-board { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 40px; width: 100%; max-width: 1300px; 
         }
-        .ema-front { z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .ema-back { transform: rotateY(180deg); filter: brightness(0.92); }
-        .meta-top { font-size: 0.85em; text-align: left; margin-bottom: 5px; font-weight: bold; color: var(--text-color); }
-        .wish-text { font-size: 1.1em; font-weight: bold; text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; word-break: break-all; color: var(--text-color); }
-        .footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75em; color: var(--text-color); }
-        #chat-window { 
-            position: fixed; bottom: 20px; right: 20px; width: 300px; height: 400px; 
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); 
-            border: 2px solid var(--shrine-red); border-radius: 12px; 
-            display: flex; flex-direction: column; z-index: 9999; 
-        }
-        #chat-header { padding: 10px; color: white; background: var(--shrine-red); cursor: move; font-weight: bold; text-align: center; border-radius: 8px 8px 0 0; }
-        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .msg-bubble { background: rgba(255, 255, 255, 0.1); color: #eee; padding: 6px 10px; border-radius: 8px; align-self: flex-start; max-width: 90%; font-size: 0.9em; }
-        .msg-bubble b { color: var(--shrine-red); display: block; font-size: 0.8em; }
-        .chat-input-area { padding: 10px; display: flex; gap: 5px; }
-        #chat-input { flex: 1; background: #333; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <div class="header-container"><header><h1>⛩️ 許願牆 ⛩️</h1></header></div>
-    <div class="input-card">
-        <input type="text" id="nickname" class="nickname-input" maxlength="15" placeholder="想要顯示的名號 (選填)">
-        <textarea id="content" maxlength="100" placeholder="在此誠心寫下您的願望..."></textarea>
-        <button class="submit-btn" id="submit-btn" onclick="window.submitWish()">奉納願望</button>
-    </div>
-    <div id="ema-board"></div>
-    <div id="chat-window">
-        <div id="chat-header">✥ 交流處 (可拖動)</div>
-        <div style="padding:5px;"><input type="text" id="chat-user-name" placeholder="自定稱呼" style="width:100%; box-sizing:border-box; background:#222; color:white; border:1px solid #555; padding:5px; border-radius:4px;"></div>
-        <div id="chat-messages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="說點什麼..." onkeypress="if(event.key==='Enter') window.sendChat()">
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, runTransaction, limitToLast, query } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
-            authDomain: "webhw-eca0a.firebaseapp.com",
-            projectId: "webhw-eca0a",
-            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", 
-            storageBucket: "webhw-eca0a.firebasestorage.app",
-            messagingSenderId: "334763145278",
-            appId: "1:334763145278:web:fee884425309a3e471b96f"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const wishesRef = ref(db, 'wishes');
-        const chatRef = ref(db, 'chat');
-
-        const deviceId = localStorage.getItem('shrine_visitor_id') || ('v_' + Math.random().toString(36).substr(2, 9));
-        localStorage.setItem('shrine_visitor_id', deviceId);
+        .ema-container { width: 320px; height: 220px; margin: 0 auto; position: relative; }
+        .ema-card { width: 100%; height: 100%; position: relative; cursor: pointer; }
         
-        const savedName = localStorage.getItem('chat_display_name');
-        if(savedName) document.getElementById('chat-user-name').value = savedName;
-        document.getElementById('chat-user-name').onchange = (e) => localStorage.setItem('chat_display_name', e.target.value);
-
-        function sanitize(str) {
-            const temp = document.createElement('div');
-            temp.textContent = str;
-            return temp.innerHTML;
+        /* 繪馬造型修正 (屋頂角度較緩) */
+        .ema-front { 
+            position: absolute; width: 100%; height: 100%; 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%); 
+            padding: 50px 20px 15px; box-sizing: border-box; 
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        function startTimer() {
-            const btn = document.getElementById('submit-btn');
-            const last = localStorage.getItem('shrine_cooldown');
-            if (last) {
-                const diff = Date.now() - parseInt(last);
-                if (diff < 300000) {
-                    const rem = Math.ceil((300000 - diff) / 1000);
-                    btn.disabled = true;
-                    btn.innerText = `${Math.floor(rem/60)}:${(rem%60).toString().padStart(2,'0')}`;
-                    setTimeout(startTimer, 1000);
-                    return;
-                }
-            }
-            btn.disabled = false;
-            btn.innerText = "奉納願望";
+        .meta-name { font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 10px; }
+        .wish-text { 
+            font-size: 1.2em; font-weight: 800; text-align: center; color: #222;
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            line-height: 1.4; word-break: break-all;
         }
-        startTimer();
 
-        // 許願牆渲染
-        onValue(wishesRef, (snapshot) => {
-            const board = document.getElementById('ema-board');
-            board.innerHTML = '';
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).reverse().forEach(key => {
-                    const w = data[key];
-                    const div = document.createElement('div');
-                    div.className = 'ema-container';
-                    div.innerHTML = `
-                        <div class="ema-card" onclick="this.classList.toggle('is-flipped')">
-                            <div class="ema-front" style="background-color:${w.color};">
-                                <div class="meta-top">${sanitize(w.nickname)}</div>
-                                <div class="wish-text">${sanitize(w.content)}</div>
-                                <div class="footer">
-                                    <span>${w.date}</span>
-                                    <span onclick="event.stopPropagation(); window.like('${key}')" style="cursor:pointer;">❤️ ${w.likes || 0}</span>
-                                </div>
-                            </div>
-                            <div class="ema-back" style="background-color:${w.color};">
-                                <div style="flex:1; overflow-y:auto; font-size:0.8em; text-align:left;" id="msg-${key}"></div>
-                                <button style="width:100%;" onclick="event.stopPropagation(); window.addMsg('${key}')">留言</button>
-                            </div>
-                        </div>`;
-                    board.appendChild(div);
-                    if (w.comments) {
-                        const box = document.getElementById(`msg-${key}`);
-                        Object.values(w.comments).forEach(c => {
-                            const d = document.createElement('div');
-                            d.innerHTML = `<b>${sanitize(c.user)}:</b> ${sanitize(c.text)}`;
-                            box.appendChild(d);
-                        });
-                    }
-                });
-            }
-        });
+        /* 底部資訊欄 */
+        .footer { 
+            width: 100%; display: flex; justify-content: space-between; align-items: center; 
+            font-size: 0.8em; color: #666; font-weight: bold; margin-top: 5px;
+        }
 
-        // 聊天室渲染修復：使用 DOM 插入確保即時更新
-        onValue(query(chatRef, limitToLast(50)), (snapshot) => {
-            const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML = ''; // 清空重新渲染
-            const data = snapshot.val();
-            if (data) {
-                Object.values(data).forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'msg-bubble';
-                    div.innerHTML = `<b>${sanitize(m.user)}</b>${sanitize(m.text)}`;
-                    chatBox.appendChild(div);
-                });
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-        });
+        /* 點讚按鈕 (復刻截圖中的橢圓膠囊樣式) */
+        .like-pill {
+            background: #ff5252; color: white; border-radius: 20px;
+            padding: 4px 12px; display: flex; align-items: center; gap: 5px;
+            box-shadow: 0 2px 5px rgba(255,82,82,0.4);
+        }
 
-        window.sendChat = () => {
-            const input = document.getElementById('chat-input');
-            const nick = document.getElementById('chat-user-name').value.trim() || "訪客";
-            const text = input.value.trim();
-            if (!text) return;
-            push(chatRef, { user: nick, text: text, time: Date.now() });
-            input.value = '';
-        };
-
-        window.submitWish = () => {
-            const nick = document.getElementById('nickname').value.trim() || "無名氏";
-            const text = document.getElementById('content').value.trim();
-            if (!text) return;
-            push(wishesRef, {
-                nickname: nick, content: text, likes: 0, voters: {}, date: new Date().toLocaleDateString(),
-                color: ['#ffcdd2', '#f8bbd0', '#e1f5fe', '#e8f5e9', '#fff9c4'][Math.floor(Math.random()*5)]
-            }).then(() => {
-                localStorage.setItem('shrine_cooldown', Date.now());
-                startTimer();
-                document.getElementById('content').value = '';
-            });
-        };
-
-        window.like = (id) => {
-            runTransaction(ref(db, `wishes/${id}`), (w) => {
-                if (w) {
-                    w.voters = w.voters || {};
-                    if (w.voters[deviceId]) { w.likes--; delete w.voters[deviceId]; }
-                    else { w.likes = (w.likes || 0) + 1; w.voters[deviceId] = true; }
-                }
-                return w;
-            });
-        };
-
-        window.addMsg = (id) => {
-            const u = document.getElementById('chat-user-name').value.trim() || "訪客";
-            const t = prompt("留言內容");
-            if (t) push(ref(db, `wishes/${id}/comments`), { user: u, text: t });
-        };
-
-        // 拖動邏輯
-        const header = document.getElementById('chat-header');
-        const win = document.getElementById('chat-window');
-        let isDragging = false, offset = [0,0];
-        header.onmousedown = (e) => { isDragging = true; offset = [win.offsetLeft - e.clientX, win.offsetTop - e.clientY]; };
-        document.onmousemove = (e) => { 
-            if(isDragging) { 
-                win.style.left = (e.clientX + offset[0]) + 'px'; 
-                win.style.top = (e.clientY + offset[1]) + 'px'; 
-                win.style.bottom = 'auto'; win.style.right = 'auto'; 
-            } 
-        };
-        document.onmouseup = () => isDragging = false;
-    </script>
-</body>
-</html>
+        /* 聊天室視窗 (保持可拖動) */
+        #chat-window { 
+            position: fixed; bottom: 20px; right:

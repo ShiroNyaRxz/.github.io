@@ -35,8 +35,11 @@
         .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.5); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; }
         .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
-        .small-btn.active { background: #ff4d4d; color: white; }
+        
+        /* 點讚按鈕優化 */
+        .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 4px; border: 1px solid transparent; }
+        .small-btn.active { background: #ff4d4d; color: white; transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 77, 77, 0.4); border-color: #ffcccc; }
+        .small-btn:active { transform: scale(0.9); } /* 點擊時縮小 */
     </style>
 </head>
 <body>
@@ -75,7 +78,6 @@
         const db = getDatabase(app);
         const wishesRef = ref(db, 'wishes');
 
-        // 監測資料庫更新
         onValue(wishesRef, (snapshot) => {
             const board = document.getElementById('ema-board');
             if (!board) return;
@@ -92,6 +94,7 @@
             
             const likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
             const isLiked = likedWishes.includes(id);
+            const displayLikes = parseInt(wish.likes) || 0; // 強制轉數字防呆
 
             const commentsHtml = wish.comments 
                 ? Object.values(wish.comments).map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') 
@@ -104,8 +107,9 @@
                         <div class="wish-content">「${wish.content}」</div>
                         <div class="footer-actions">
                             <span style="font-size: 0.7em;">${wish.date}</span>
-                            <button class="small-btn ${isLiked ? 'active' : ''}" onclick="event.stopPropagation(); window.handleLike('${id}', ${wish.likes || 0})">
-                                ❤️ <span class="like-count">${wish.likes || 0}</span>
+                            <button id="like-btn-${id}" class="small-btn ${isLiked ? 'active' : ''}" 
+                                onclick="event.stopPropagation(); window.handleLike('${id}', ${displayLikes})">
+                                ❤️ <span class="like-count">${displayLikes}</span>
                             </button>
                         </div>
                     </div>
@@ -121,17 +125,13 @@
             board.appendChild(container);
         }
 
-        // --- 功能函式 ---
-
         window.addNewWish = function() {
             const author = document.getElementById('author-name').value || "無名氏";
             const content = document.getElementById('wish-text').value;
             if (!content) return alert("請寫下願望內容");
 
             push(wishesRef, {
-                author, 
-                content, 
-                likes: 0,
+                author, content, likes: 0,
                 date: new Date().toLocaleDateString(),
                 color: getRandomHexColor(),
                 rotate: getRandomRotate()
@@ -142,16 +142,25 @@
         };
 
         window.handleLike = function(id, currentLikes) {
+            let likes = parseInt(currentLikes) || 0;
             let likedWishes = JSON.parse(localStorage.getItem('likedWishes') || '[]');
             const index = likedWishes.indexOf(id);
+            const btn = document.getElementById(`like-btn-${id}`);
+
             if (index === -1) {
+                // 按讚
                 likedWishes.push(id);
-                update(ref(db, `wishes/${id}`), { likes: currentLikes + 1 });
+                likes += 1;
+                if(btn) btn.classList.add('active');
             } else {
+                // 取消
                 likedWishes.splice(index, 1);
-                update(ref(db, `wishes/${id}`), { likes: Math.max(0, currentLikes - 1) });
+                likes = Math.max(0, likes - 1);
+                if(btn) btn.classList.remove('active');
             }
+
             localStorage.setItem('likedWishes', JSON.stringify(likedWishes));
+            update(ref(db, `wishes/${id}`), { likes: likes });
         };
 
         window.leaveComment = function(id) {
@@ -164,7 +173,7 @@
             const bgm = document.getElementById('bgm-player');
             const musicBtn = document.getElementById('music-toggle');
             if (!bgm.paused) { bgm.pause(); musicBtn.innerText = '靜'; }
-            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先與頁面互動再開啟音樂")); }
+            else { bgm.play().then(() => { musicBtn.innerText = '鳴'; }).catch(() => alert("請先點擊頁面再開啟")); }
         };
 
         function getRandomHexColor() {

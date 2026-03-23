@@ -24,15 +24,16 @@
 
         .sub-title { color: #f0f0f0; text-align: center; margin-bottom: 30px; font-size: 0.9em; }
         
-        /* 輸入區 */
+        /* 輸入區樣式優化 */
         .input-section { 
             display: none; 
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); 
             padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
             margin-bottom: 40px; width: 100%; max-width: 450px; 
         }
-        .posting-as { font-size: 0.85em; color: #666; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 8px; }
-        textarea { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; resize: none; }
+        .posting-as { font-size: 0.85em; color: #666; margin-bottom: 12px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+        .nickname-input { width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 0.9em; background: #fffdf0; }
+        textarea { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; resize: none; min-height: 80px; }
         .primary-btn { background: var(--shrine-red); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em; transition: 0.2s; }
         .primary-btn:hover { background: #e63939; transform: translateY(-2px); }
         
@@ -44,13 +45,13 @@
         .ema-front, .ema-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%); padding: 45px 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .ema-front { z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .ema-back { transform: rotateY(180deg); filter: brightness(0.92); }
-        .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.6); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; font-weight: bold; }
+        .meta-top { font-size: 0.8em; color: rgba(0,0,0,0.7); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px; padding-bottom: 5px; font-weight: bold; }
         .wish-content { font-size: 1.1em; font-weight: bold; color: var(--text-color); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; line-height: 1.4; }
         .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         
         .small-btn { background: rgba(0,0,0,0.1); border: none; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 4px; }
-        .small-btn.active { background: #ff4d4d !important; color: white !important; transform: scale(1.05); }
-        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .small-btn.active { background: #ff4d4d !important; color: white !important; }
+        #music-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; font-size: 22px; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -73,10 +74,14 @@
         </div>
     </div>
 
-    <div class="sub-title">登入後即可奉納願望｜誠心則靈</div>
+    <div class="sub-title">登入後即可自定暱稱奉納願望</div>
 
     <div class="input-section" id="wish-input-area">
-        <div class="posting-as">🖋️ 祈願人：<span id="posting-name" style="font-weight: bold; color: var(--shrine-red);"></span></div>
+        <div class="posting-as">
+            👤 Google 帳號：<span id="google-name-display" style="color: #666;"></span><br>
+            <small style="color: #999;">(您的帳號資訊僅供驗證，不會直接顯示在願望標題)</small>
+        </div>
+        <input type="text" id="custom-nickname" class="nickname-input" placeholder="想要顯示的自定義暱稱 (選填)">
         <textarea id="wish-text" rows="3" placeholder="請在此輸入您的願望..."></textarea>
         <button class="primary-btn" onclick="window.addNewWish()">正式奉納 (掛上願望)</button>
     </div>
@@ -88,6 +93,7 @@
         import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
+        // --- Firebase 配置 (請保持您的配置不變) ---
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
@@ -110,7 +116,7 @@
             const loginBtn = document.getElementById('login-btn');
             const userInfo = document.getElementById('user-info');
             const inputArea = document.getElementById('wish-input-area');
-            const postingName = document.getElementById('posting-name');
+            const googleNameDisplay = document.getElementById('google-name-display');
             
             if (user) {
                 currentUser = user;
@@ -119,7 +125,7 @@
                 inputArea.style.display = 'block';
                 document.getElementById('user-display-name').innerText = user.displayName;
                 document.getElementById('user-pic').src = user.photoURL;
-                postingName.innerText = user.displayName; // 同步顯示在輸入框上方
+                googleNameDisplay.innerText = user.displayName;
             } else {
                 currentUser = null;
                 loginBtn.style.display = 'flex';
@@ -153,7 +159,7 @@
             container.innerHTML = `
                 <div class="ema-card" style="transform: rotate(${wish.rotate || 0}deg);" onclick="this.classList.toggle('is-flipped')">
                     <div class="ema-front" style="background-color: ${wish.color || '#fff9c4'};">
-                        <div class="meta-top">祈願人：${wish.author}</div>
+                        <div class="meta-top">祈願人：${wish.nickname || wish.author}</div>
                         <div class="wish-content">「${wish.content}」</div>
                         <div class="footer-actions">
                             <span style="font-size: 0.7em;">${wish.date}</span>
@@ -166,7 +172,7 @@
                     <div class="ema-back" style="background-color: ${wish.color || '#fff9c4'};">
                         <strong style="font-size: 0.85em;">📜 溫暖回饋</strong>
                         <div style="flex-grow:1; font-size:0.8em; margin-top:5px; overflow-y:auto; text-align:left;">${commentsHtml}</div>
-                        <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); window.leaveComment('${id}')">我也要留言</button>
+                        <button class="small-btn" style="width:100%; margin-top:5px; background:var(--shrine-red); color:white;" onclick="event.stopPropagation(); window.leaveComment('${id}', '${wish.nickname || wish.author}')">我也要留言</button>
                     </div>
                 </div>
             `;
@@ -175,22 +181,25 @@
 
         window.addNewWish = function() {
             if (!currentUser) return alert("請先登入 Google！");
+            
+            const nickname = document.getElementById('custom-nickname').value.trim();
             const content = document.getElementById('wish-text').value;
+            
             if (!content) return alert("請寫下您的願望");
 
-            // 強制使用 Google 的名稱 displayName
             push(wishesRef, {
-                author: currentUser.displayName, 
+                author: currentUser.displayName, // 原始 Google 姓名
+                nickname: nickname || currentUser.displayName, // 如果沒填暱稱，就用 Google 姓名
                 content: content, 
                 likes: 0,
                 uid: currentUser.uid, 
-                photo: currentUser.photoURL,
                 date: new Date().toLocaleDateString(),
                 color: getRandomHexColor(),
                 rotate: getRandomRotate()
             }).then(() => {
                 document.getElementById('wish-text').value = '';
-                alert("願望已掛上牆面！");
+                document.getElementById('custom-nickname').value = '';
+                alert("願望已成功奉納！");
             });
         };
 
@@ -204,9 +213,9 @@
             update(ref(db, `wishes/${id}`), { likes: likes });
         };
 
-        window.leaveComment = function(id) {
+        window.leaveComment = function(id, wishAuthor) {
             const user = (currentUser ? currentUser.displayName : "訪客");
-            const text = prompt("你想對這位祈願人說什麼？");
+            const text = prompt(`你想對「${wishAuthor}」說什麼？`);
             if (text) push(ref(db, `wishes/${id}/comments`), { user, text });
         };
 

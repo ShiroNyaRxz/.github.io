@@ -1,7 +1,7 @@
 <!-- 1. 在 </body> 前引入 Firebase SDK -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com";
-    import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com";
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
 
     // 🔴 請在此處貼上你從 Firebase Console 取得的配置內容
     const firebaseConfig = {

@@ -17,6 +17,7 @@
     // 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const analytics = getAnalytics(app);
     const wishesRef = ref(db, 'wishes');
 
     // --- 音樂控制邏輯 (保持不變) ---

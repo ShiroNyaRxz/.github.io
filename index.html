@@ -3,44 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>佈告欄</title>
+    <title>我的公開佈告欄</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #5d8a97; min-height: 100vh; font-family: sans-serif; }
-        /* 瀑布流網格 */
         .masonry-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
             padding: 24px;
         }
-        /* 彈窗毛玻璃背景 */
         .modal-overlay {
             background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(8px);
         }
+        /* 卡片懸浮效果 */
+        .post-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
     </style>
 </head>
 <body>
 
     <nav class="bg-black/20 backdrop-blur-md p-4 flex justify-between items-center text-white sticky top-0 z-40">
-        <h1 class="text-xl font-bold tracking-tight">我的佈告欄</h1>
+        <h1 class="text-xl font-bold tracking-tight">公開佈告欄</h1>
         <div id="auth-status">
-            <button id="login-btn" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold hover:bg-gray-100 transition">Google 登入</button>
+            <button id="login-nav-btn" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold">載入中...</button>
         </div>
     </nav>
 
     <div id="post-container" class="masonry-grid">
         </div>
 
-    <button id="add-btn" class="hidden fixed bottom-8 right-8 bg-white text-gray-900 w-16 h-16 rounded-full shadow-2xl text-4xl font-light flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+    <button id="add-btn" class="fixed bottom-8 right-8 bg-white text-gray-900 w-16 h-16 rounded-full shadow-2xl text-4xl font-light flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
         +
     </button>
 
     <div id="post-modal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50 px-4">
         <div class="bg-zinc-900 w-full max-w-xl rounded-[2rem] p-8 shadow-2xl border border-zinc-800">
             <div class="flex justify-between items-center mb-6">
-                <input id="new-title" type="text" placeholder="主題" class="bg-transparent text-white text-3xl font-bold focus:outline-none w-full placeholder-zinc-600">
+                <input id="new-title" type="text" placeholder="主題" class="bg-transparent text-white text-3xl font-bold focus:outline-none w-full placeholder-zinc-700">
                 <button id="submit-post" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-200 transition">發佈</button>
             </div>
             
@@ -51,7 +51,7 @@
                 <button title="搜尋" class="hover:text-white text-3xl transition">🔍</button>
             </div>
 
-            <textarea id="new-content" placeholder="寫點美好的內容..." class="bg-transparent text-zinc-300 w-full h-40 resize-none focus:outline-none text-lg placeholder-zinc-700"></textarea>
+            <textarea id="new-content" placeholder="寫點美好的內容..." class="bg-transparent text-zinc-300 w-full h-40 resize-none focus:outline-none text-lg placeholder-zinc-800"></textarea>
             
             <div class="flex justify-end mt-4">
                 <button id="close-modal" class="text-zinc-500 hover:text-zinc-300 transition text-sm">取消編輯</button>
@@ -64,7 +64,7 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-        // 1. 你的 Firebase 配置
+        // 你的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
@@ -76,54 +76,55 @@
             measurementId: "G-DX84SV6K8R"
         };
 
-        // 2. 【核心設定】請將下方字串替換為你在 Firestore 規則中允許的那個 UID
-        const ADMIN_UID = "z7ZpzNs9gFRo9raX51fDpho1frL2"; 
-
-        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // DOM 元素
-        const loginBtn = document.getElementById('login-btn');
-        const authStatus = document.getElementById('auth-status');
         const addBtn = document.getElementById('add-btn');
         const modal = document.getElementById('post-modal');
-        const postContainer = document.getElementById('post-container');
+        const authStatus = document.getElementById('auth-status');
 
-        // 登入事件
-        loginBtn.addEventListener('click', () => signInWithPopup(auth, provider));
-
-        // 監聽登入狀態
+        // --- 1. 偵測登入狀態 ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // 已登入：顯示頭像與登出按鈕
                 authStatus.innerHTML = `
                     <div class="flex items-center gap-3">
                         <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-white/20">
-                        <button id="logout-link" class="text-sm opacity-70 hover:opacity-100">登出</button>
+                        <button id="logout-btn" class="text-sm opacity-70 hover:opacity-100">登出</button>
                     </div>
                 `;
-                document.getElementById('logout-link').onclick = () => signOut(auth);
-
-                // 權限檢查：只有 UID 匹配才顯示新增按鈕
-                if (user.uid === ADMIN_UID) {
-                    addBtn.classList.remove('hidden');
-                } else {
-                    addBtn.classList.add('hidden');
-                }
+                document.getElementById('logout-btn').onclick = () => signOut(auth);
             } else {
-                authStatus.innerHTML = `<button id="re-login" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold">Google 登入</button>`;
-                document.getElementById('re-login').onclick = () => signInWithPopup(auth, provider);
-                addBtn.classList.add('hidden');
+                // 未登入：顯示登入按鈕
+                authStatus.innerHTML = `<button id="login-nav-btn" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold">Google 登入</button>`;
+                document.getElementById('login-nav-btn').onclick = () => signInWithPopup(auth, provider);
             }
         });
 
-        // 彈窗控制
-        addBtn.onclick = () => modal.classList.remove('hidden');
+        // --- 2. 新增按鈕偵測 (你的需求重點) ---
+        addBtn.onclick = () => {
+            const user = auth.currentUser;
+            if (user) {
+                // 已經登入：直接打開深色彈窗
+                modal.classList.remove('hidden');
+            } else {
+                // 未登入：提示並觸發登入
+                alert("請先登入 Google 帳號即可發佈貼文！");
+                signInWithPopup(auth, provider).then((result) => {
+                    // 登入成功後，自動幫他開啟彈窗
+                    modal.classList.remove('hidden');
+                }).catch((error) => {
+                    console.log("登入被取消或失敗");
+                });
+            }
+        };
+
+        // --- 3. 關閉彈窗 ---
         document.getElementById('close-modal').onclick = () => modal.classList.add('hidden');
 
-        // 發佈功能
+        // --- 4. 發佈功能 ---
         document.getElementById('submit-post').onclick = async () => {
             const title = document.getElementById('new-title').value;
             const content = document.getElementById('new-content').value;
@@ -134,6 +135,7 @@
                 await addDoc(collection(db, "posts"), {
                     title: title,
                     content: content,
+                    authorName: auth.currentUser.displayName,
                     createdAt: serverTimestamp(),
                     uid: auth.currentUser.uid
                 });
@@ -141,32 +143,27 @@
                 document.getElementById('new-title').value = '';
                 document.getElementById('new-content').value = '';
             } catch (e) {
-                alert("發佈失敗，請確認你的 UID 權限是否正確！");
-                console.error(e);
+                alert("發佈失敗！請確認 Firebase Rules 是否允許登入者寫入。");
             }
         };
 
-        // 監聽 Firestore 數據並渲染卡片
+        // --- 5. 監聽資料庫渲染貼文 ---
         const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
-            postContainer.innerHTML = '';
+            const container = document.getElementById('post-container');
+            container.innerHTML = '';
             snapshot.forEach((doc) => {
                 const post = doc.data();
-                const date = post.createdAt?.toDate().toLocaleDateString() || "剛才";
-                
-                const card = `
-                    <div class="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-shadow overflow-hidden flex flex-col">
-                        <div class="p-6">
-                            <h3 class="text-2xl font-bold text-gray-800 mb-3">${post.title}</h3>
-                            <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">${post.content || ''}</p>
-                        </div>
-                        <div class="mt-auto px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                const date = post.createdAt?.toDate().toLocaleDateString() || "傳送中...";
+                container.innerHTML += `
+                    <div class="post-card bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col p-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">${post.title}</h3>
+                        <p class="text-gray-600 mb-6 leading-relaxed">${post.content || ''}</p>
+                        <div class="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
+                            <span class="font-medium text-gray-500">${post.authorName || '匿名用戶'}</span>
                             <span>${date}</span>
-                            <span class="bg-gray-200 px-2 py-1 rounded">貼文</span>
                         </div>
-                    </div>
-                `;
-                postContainer.innerHTML += card;
+                    </div>`;
             });
         });
     </script>

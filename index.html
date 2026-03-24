@@ -3,217 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📝 許願便利貼牆 📝</title>
+    <title>🎮 遊戲角色 Wiki 🎮</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;900&display=swap');
-
-        :root { --tape-color: rgba(255, 255, 255, 0.3); }
+        :root { --wiki-gold: #f1c40f; --wiki-dark: #2c3e50; }
         body {
             font-family: "Noto Sans TC", sans-serif;
-            background-color: #2c3e50;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('夜景.jpg');
-            background-size: cover; background-position: center; background-attachment: fixed;
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            background: var(--wiki-dark) url('夜景.jpg') no-repeat center center fixed;
+            background-size: cover; margin: 0; color: white;
         }
 
-        /* 標題與輸入框 */
-        .header-container { border-bottom: 3px solid #f1c40f; margin-bottom: 30px; }
-        header h1 { color: white; margin: 10px; font-size: 2.2em; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        /* 導覽列與登入 */
+        nav {
+            background: rgba(0,0,0,0.8); padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--wiki-gold);
+        }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .login-btn { background: var(--wiki-gold); border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        .input-card { 
-            background: #fff; padding: 25px; border-radius: 15px; 
-            width: 100%; max-width: 480px; margin-bottom: 60px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            position: relative;
+        /* 編輯區域 (預設隱藏，管理員登入後才顯示) */
+        #admin-panel {
+            background: rgba(255,255,255,0.9); color: #333;
+            max-width: 600px; margin: 20px auto; padding: 20px;
+            border-radius: 10px; display: none;
         }
-        .input-card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 10px;
-            background: #f1c40f; border-radius: 15px 15px 0 0;
-        }
+        input, textarea { width: 100%; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
 
-        .nickname-input, textarea { 
-            width: 100%; margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; 
-            border-radius: 8px; box-sizing: border-box; font-size: 1.1em; background: #fafafa; 
+        /* 角色卡片網格 */
+        #wiki-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px; padding: 40px; max-width: 1200px; margin: auto;
         }
-        textarea { resize: none; min-height: 120px; }
+        .char-card {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 15px;
+            padding: 20px; position: relative; transition: 0.3s;
+        }
+        .char-card:hover { transform: translateY(-5px); border-color: var(--wiki-gold); }
+        .char-name { font-size: 1.5em; color: var(--wiki-gold); font-weight: bold; margin-bottom: 10px; }
+        .char-desc { font-size: 0.9em; line-height: 1.6; height: 100px; overflow-y: auto; }
         
-        /* 發送按鈕 */
-        .submit-btn { 
-            background: #7f8c8d; color: white; border: none; padding: 18px; 
-            width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.3em;
-            transition: 0.3s;
+        .delete-btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 5px 10px; border-radius: 5px; cursor: pointer;
+            position: absolute; top: 10px; right: 10px; display: none;
         }
-        .submit-btn:not(:disabled) { background: #27ae60; }
-        .submit-btn:disabled { cursor: not-allowed; opacity: 0.8; }
-
-        /* 便利貼排列 */
-        #ema-board { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            gap: 50px; width: 100%; max-width: 1400px; padding: 20px;
-        }
-
-        .ema-container { 
-            width: 280px; height: 280px; margin: 0 auto; position: relative; 
-            transition: transform 0.3s ease;
-        }
-        .ema-container:hover { transform: scale(1.05) rotate(0deg) !important; z-index: 10; }
-        
-        .ema-front { 
-            position: absolute; width: 100%; height: 100%; 
-            padding: 40px 25px 15px; box-sizing: border-box; 
-            display: flex; flex-direction: column; align-items: center;
-            border-radius: 2px;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.1) inset; 
-        }
-
-        .ema-front::before {
-            content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-            width: 100px; height: 30px; background: var(--tape-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 2;
-        }
-
-        .meta-name { font-size: 0.95em; font-weight: bold; color: #555; margin-bottom: 10px; width: 100%; text-align: left; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 5px; }
-        
-        .wish-text { 
-            font-size: 1.3em; font-weight: 900; text-align: center; color: #000;
-            flex-grow: 1; display: flex; align-items: center; justify-content: center;
-            line-height: 1.4; word-break: break-all;
-        }
-
-        .footer { 
-            width: 100%; display: flex; justify-content: space-between; align-items: center; 
-            font-size: 0.8em; color: #777; font-weight: bold; margin-top: 5px;
-        }
-
-        .like-pill {
-            background: #95a5a6; color: white; border-radius: 20px;
-            padding: 4px 12px; display: flex; align-items: center; gap: 4px;
-            cursor: pointer; transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .like-pill.voted { background: #e74c3c; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4); }
     </style>
 </head>
 <body>
 
-    <div class="header-container"><header><h1>📝 許願便利貼牆 📝</h1></header></div>
-    
-    <div class="input-card">
-        <input type="text" id="nickname" class="nickname-input" placeholder="想要顯示的名號 (選填)">
-        <textarea id="content" placeholder="在此寫下您的願望..."></textarea>
-        <button class="submit-btn" id="submit-btn" onclick="window.submitWish()">發布便利貼</button>
+    <nav>
+        <h2>🎮 角色知識庫</h2>
+        <div class="user-info" id="auth-section">
+            <button class="login-btn" onclick="window.login()">Google 登入編輯</button>
+        </div>
+    </nav>
+
+    <div id="admin-panel">
+        <h3>📝 新增/編輯角色 (管理員限定)</h3>
+        <input type="text" id="char-name" placeholder="角色名稱">
+        <textarea id="char-desc" placeholder="角色技能與背景描述..."></textarea>
+        <button class="login-btn" id="submit-btn" onclick="window.saveChar()">保存角色資料</button>
+        <p id="cooldown-text" style="font-size: 0.8em; color: #666;"></p>
     </div>
 
-    <div id="ema-board"></div>
+    <div id="wiki-grid"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, runTransaction, query } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
             projectId: "webhw-eca0a",
-            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com", 
-            storageBucket: "webhw-eca0a.firebasestorage.app",
-            messagingSenderId: "334763145278",
+            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com",
             appId: "1:334763145278:web:fee884425309a3e471b96f"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const wishesRef = ref(db, 'wishes');
-        const deviceId = localStorage.getItem('shrine_visitor_id') || ('v_' + Math.random().toString(36).substr(2, 9));
-        localStorage.setItem('shrine_visitor_id', deviceId);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        const adminEmail = "YOUR_EMAIL@gmail.com"; // ⚠️ 請改成你的 Google 信箱
+        let currentUser = null;
 
-        function sanitize(str) {
-            const temp = document.createElement('div');
-            temp.textContent = str;
-            return temp.innerHTML;
-        }
+        // 登入邏輯
+        window.login = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth);
 
-        const stickyColors = ['#fffc7f', '#ffccff', '#ccffff', '#b3ffb3', '#ffd9b3', '#e6ccff'];
+        // 監聽登入狀態
+        onAuthStateChanged(auth, (user) => {
+            const authSection = document.getElementById('auth-section');
+            const adminPanel = document.getElementById('admin-panel');
+            currentUser = user;
 
-        // --- 修正冷卻限制為 10 秒 ---
-        function startTimer() {
-            const btn = document.getElementById('submit-btn');
-            const last = localStorage.getItem('shrine_cooldown');
-            if (last) {
-                const diff = Date.now() - parseInt(last);
-                if (diff < 10000) { // 10,000 毫秒 = 10 秒
-                    const rem = Math.ceil((10000 - diff) / 1000);
-                    btn.disabled = true;
-                    btn.innerText = `請等待 ${rem} 秒`;
-                    setTimeout(startTimer, 1000);
-                    return;
+            if (user) {
+                authSection.innerHTML = `<span>👋 ${user.displayName}</span> <button class="login-btn" style="background:#666" onclick="window.logout()">登出</button>`;
+                // 只有指定管理員可以看到編輯面板
+                if (user.email === adminEmail) {
+                    adminPanel.style.display = 'block';
+                    document.querySelectorAll('.delete-btn').forEach(b => b.style.display = 'block');
                 }
-            }
-            btn.disabled = false;
-            btn.innerText = "發布便利貼";
-        }
-        startTimer();
-
-        // 渲染便利貼
-        onValue(wishesRef, (snapshot) => {
-            const board = document.getElementById('ema-board');
-            board.innerHTML = '';
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).reverse().forEach(key => {
-                    const w = data[key];
-                    const hasVoted = w.voters && w.voters[deviceId];
-                    const randomRotate = (Math.random() * 6 - 3).toFixed(1);
-                    const div = document.createElement('div');
-                    div.className = 'ema-container';
-                    div.style.transform = `rotate(${randomRotate}deg)`;
-                    div.innerHTML = `
-                        <div class="ema-front" style="background-color:${w.color || '#fffc7f'};">
-                            <div class="meta-name">${sanitize(w.nickname)}</div>
-                            <div class="wish-text">${sanitize(w.content)}</div>
-                            <div class="footer">
-                                <span>${w.date}</span>
-                                <div class="like-pill ${hasVoted ? 'voted' : ''}" onclick="window.like('${key}')">
-                                    ❤️ ${w.likes || 0}
-                                </div>
-                            </div>
-                        </div>`;
-                    board.appendChild(div);
-                });
+            } else {
+                authSection.innerHTML = `<button class="login-btn" onclick="window.login()">Google 登入編輯</button>`;
+                adminPanel.style.display = 'none';
             }
         });
 
-        // 點讚邏輯
-        window.like = (id) => {
-            runTransaction(ref(db, `wishes/${id}`), (w) => {
-                if (w) {
-                    w.voters = w.voters || {};
-                    if (w.voters[deviceId]) {
-                        w.likes = Math.max(0, (w.likes || 1) - 1);
-                        delete w.voters[deviceId];
-                    } else {
-                        w.likes = (w.likes || 0) + 1;
-                        w.voters[deviceId] = true;
-                    }
-                }
-                return w;
-            });
+        // 保存角色 (含 10 秒防護)
+        window.saveChar = () => {
+            const name = document.getElementById('char-name').value.trim();
+            const desc = document.getElementById('char-desc').value.trim();
+            const lastPost = localStorage.getItem('wiki_cooldown');
+            
+            if (Date.now() - lastPost < 10000) {
+                alert("請等待 10 秒冷卻時間");
+                return;
+            }
+
+            if (name && desc) {
+                push(ref(db, 'characters'), { name, desc }).then(() => {
+                    localStorage.setItem('wiki_cooldown', Date.now());
+                    document.getElementById('char-name').value = '';
+                    document.getElementById('char-desc').value = '';
+                }).catch(err => alert("權限不足：只有管理員可以編輯！"));
+            }
         };
 
-        // 發送願望
-        window.submitWish = () => {
-            const text = document.getElementById('content').value.trim();
-            if (!text) return;
-            push(wishesRef, {
-                nickname: document.getElementById('nickname').value || "無名氏",
-                content: text, likes: 0, date: new Date().toLocaleDateString(), voters: {},
-                color: stickyColors[Math.floor(Math.random()*stickyColors.length)]
-            }).then(() => {
-                localStorage.setItem('shrine_cooldown', Date.now());
-                startTimer();
-                document.getElementById('content').value = '';
-            });
+        // 刪除角色
+        window.deleteChar = (id) => {
+            if (confirm("確定要刪除此角色嗎？")) {
+                remove(ref(db, `characters/${id}`)).catch(err => alert("權限不足"));
+            }
         };
+
+        // 讀取資料
+        onValue(ref(db, 'characters'), (snapshot) => {
+            const grid = document.getElementById('wiki-grid');
+            grid.innerHTML = '';
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const c = data[key];
+                    const isAdmin = currentUser && currentUser.email === adminEmail;
+                    const div = document.createElement('div');
+                    div.className = 'char-card';
+                    div.innerHTML = `
+                        <button class="delete-btn" style="display:${isAdmin ? 'block' : 'none'}" onclick="window.deleteChar('${key}')">刪除</button>
+                        <div class="char-name">${c.name}</div>
+                        <div class="char-desc">${c.desc}</div>
+                    `;
+                    grid.appendChild(div);
+                });
+            }
+        });
     </script>
 </body>
 </html>

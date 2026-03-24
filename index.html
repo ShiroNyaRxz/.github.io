@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galeria - 穩定版佈告欄</title>
+    <title>Galeria - 獨立展開修復版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/draggabilly@3/dist/draggabilly.pkgd.min.js"></script>
     <style>
@@ -13,17 +13,12 @@
             background-size: 40px 40px;
             color: white; min-height: 100vh;
         }
+        /* 核心修復：防止同一列被撐開 */
         .geo-card {
             background: white;
             clip-path: polygon(0% 0%, 100% 0%, 100% 90%, 95% 100%, 0% 100%);
+            align-self: start; /* 關鍵：讓卡片高度獨立 */
             transition: all 0.3s ease;
-        }
-        .glass-modal {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 40px;
-            cursor: grab;
         }
         .comment-section {
             max-height: 0;
@@ -32,12 +27,24 @@
             transition: max-height 0.4s ease, opacity 0.3s ease;
         }
         .comment-section.expand {
-            max-height: 600px;
+            max-height: 1000px; /* 給予足夠高度 */
             opacity: 1;
             margin-top: 1rem;
         }
-        .arrow-icon { transition: transform 0.4s ease; }
-        .arrow-icon.active { transform: rotate(180deg); }
+        .arrow-icon { 
+            transition: transform 0.4s ease; 
+            transform: rotate(0deg); /* 預設向下 */
+        }
+        .arrow-icon.active { 
+            transform: rotate(180deg); /* 點擊後向上 */
+        }
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            cursor: grab;
+        }
     </style>
 </head>
 <body>
@@ -45,19 +52,20 @@
     <nav class="p-6 flex justify-between items-center border-b border-white/10 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md z-40">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-amber-400 rounded-full"></div>
-            <span class="text-2xl font-black tracking-widest uppercase">Galeria</span>
+            <span class="text-2xl font-black tracking-widest uppercase text-white">Galeria</span>
         </div>
         <div id="auth-status"></div>
     </nav>
 
-    <div id="post-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-10"></div>
+    <div id="post-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-10 items-start">
+        </div>
 
     <button id="add-btn" class="fixed bottom-10 right-10 w-20 h-20 bg-amber-400 text-black rounded-full shadow-2xl text-5xl z-50 hover:scale-110 transition">+</button>
 
     <div id="post-modal" class="fixed top-1/4 left-1/3 w-[400px] glass-modal p-8 hidden z-[60]">
         <input id="new-title" type="text" placeholder="主題" class="bg-transparent text-white text-2xl font-bold w-full border-b border-white/20 mb-6 outline-none">
         <textarea id="new-content" placeholder="內容..." class="bg-black/20 w-full h-32 rounded-xl p-4 text-white outline-none mb-6"></textarea>
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center text-white">
             <button onclick="document.getElementById('post-modal').classList.add('hidden')">取消</button>
             <button id="submit-post" class="bg-white text-black px-8 py-2 rounded-full font-bold">發佈</button>
         </div>
@@ -85,7 +93,7 @@
 
         onAuthStateChanged(auth, (user) => {
             const statusBox = document.getElementById('auth-status');
-            statusBox.innerHTML = user ? `<button id="logout" class="text-xs opacity-50 uppercase">${user.displayName} (登出)</button>` : `<button id="login" class="bg-amber-400 text-black px-4 py-2 rounded-full font-bold">登入</button>`;
+            statusBox.innerHTML = user ? `<button id="logout" class="text-xs opacity-50 uppercase text-white">${user.displayName} (登出)</button>` : `<button id="login" class="bg-amber-400 text-black px-4 py-2 rounded-full font-bold">登入</button>`;
             if(document.getElementById('logout')) document.getElementById('logout').onclick = () => signOut(auth);
             if(document.getElementById('login')) document.getElementById('login').onclick = () => signInWithPopup(auth, provider);
         });
@@ -113,9 +121,8 @@
                 
                 const card = document.createElement('div');
                 card.className = "geo-card p-6 text-black flex flex-col";
-                // 整個卡片不綁定 click，只讓按鈕控制
                 card.innerHTML = `
-                    <div class="text-[10px] font-bold text-amber-500 mb-1">PROJECT: ${id.slice(0,6)}</div>
+                    <div class="text-[10px] font-bold text-amber-500 mb-1">PROJECT ID: ${id.slice(0,6)}</div>
                     <h3 class="text-2xl font-black mb-2">${data.title}</h3>
                     <p class="text-gray-600 mb-4 flex-grow">${data.content}</p>
                     <div class="flex justify-between items-center border-t pt-4">
@@ -126,62 +133,62 @@
                     </div>
                     <div class="flex justify-center mt-3">
                         <button onclick="window.toggleComments('${id}')" class="p-1 hover:text-amber-500 transition">
-                            <svg id="arrow-${id}" class="arrow-icon w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <svg id="arrow-${id}" class="arrow-icon w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
                         </button>
                     </div>
                     <div id="sec-${id}" class="comment-section" onclick="event.stopPropagation()">
                         <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                             <input type="text" id="input-${id}" placeholder="在這裡寫下留言 (Enter)..." 
+                                onkeydown="window.handleComment(event, '${id}')"
                                 class="w-full text-xs bg-white rounded-lg px-3 py-2 border border-slate-200 outline-none focus:border-amber-400 mb-3">
-                            <div id="list-${id}" class="space-y-3 text-[11px] text-slate-600 max-h-40 overflow-y-auto"></div>
+                            <div id="list-${id}" class="space-y-2 text-[11px] text-slate-600 max-h-40 overflow-y-auto"></div>
                         </div>
                     </div>
                 `;
                 container.appendChild(card);
-                bindCommentEvent(id);
                 loadComments(id);
             });
         });
 
-        // 修改後的展開邏輯
+        // 留言處理函式 (全域)
+        window.handleComment = async (e, postId) => {
+            e.stopPropagation(); 
+            if (e.key === 'Enter') {
+                const input = document.getElementById(`input-${postId}`);
+                const text = input.value.trim();
+                if (!auth.currentUser) return alert("請先登入");
+                if (!text) return;
+
+                try {
+                    await addDoc(collection(db, `posts/${postId}/comments`), {
+                        text: text,
+                        user: auth.currentUser.displayName,
+                        createdAt: serverTimestamp()
+                    });
+                    input.value = '';
+                } catch (err) {
+                    console.error("留言失敗", err);
+                }
+            }
+        };
+
         window.toggleComments = (id) => {
             const target = document.getElementById(`sec-${id}`);
             const arrow = document.getElementById(`arrow-${id}`);
             const isOpened = target.classList.contains('expand');
             
-            // 收回所有其他的
+            // 關閉其他所有卡片
             document.querySelectorAll('.comment-section').forEach(s => s.classList.remove('expand'));
             document.querySelectorAll('.arrow-icon').forEach(a => a.classList.remove('active'));
 
+            // 如果本來是關的，就打開它
             if(!isOpened) {
                 target.classList.add('expand');
-                arrow.classList.add('active');
+                arrow.classList.add('active'); // 箭頭旋轉 180 度 (向上)
             }
         };
-
-        // 綁定 Enter 留言事件並防止冒泡
-        function bindCommentEvent(id) {
-            setTimeout(() => {
-                const input = document.getElementById(`input-${id}`);
-                if(!input) return;
-                input.addEventListener('keydown', async (e) => {
-                    e.stopPropagation(); // 關鍵：防止按鍵事件導致卡片展開
-                    if(e.key === 'Enter' && input.value.trim()) {
-                        if(!auth.currentUser) return alert("請先登入");
-                        try {
-                            await addDoc(collection(db, `posts/${id}/comments`), {
-                                text: input.value,
-                                user: auth.currentUser.displayName,
-                                createdAt: serverTimestamp()
-                            });
-                            input.value = '';
-                        } catch (err) {
-                            console.error("留言失敗", err);
-                        }
-                    }
-                });
-            }, 200);
-        }
 
         window.toggleLike = async (id, liked) => {
             if(!auth.currentUser) return alert("請先登入");
@@ -193,11 +200,13 @@
         function loadComments(postId) {
             onSnapshot(query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc")), (snap) => {
                 const list = document.getElementById(`list-${postId}`);
-                if(list) list.innerHTML = snap.docs.map(d => `
-                    <div class="bg-white/70 p-2 rounded-lg border-l-4 border-amber-400">
-                        <b class="text-amber-600 uppercase text-[9px] block">${d.data().user}:</b>
-                        <span>${d.data().text}</span>
-                    </div>`).join('');
+                if(list) {
+                    list.innerHTML = snap.docs.map(d => `
+                        <div class="bg-white p-2 rounded border-l-2 border-amber-400">
+                            <b class="text-amber-600 text-[9px] block">${d.data().user}:</b>
+                            <span>${d.data().text}</span>
+                        </div>`).join('');
+                }
             });
         }
     </script>

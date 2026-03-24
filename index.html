@@ -5,64 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎮 遊戲角色 Wiki 🎮</title>
     <style>
-        :root { --wiki-gold: #f1c40f; --wiki-dark: #2c3e50; }
+        :root { --wiki-gold: #f1c40f; --wiki-dark: #2c3e50; --wiki-green: #27ae60; }
         body {
             font-family: "Noto Sans TC", sans-serif;
             background: var(--wiki-dark) url('夜景.jpg') no-repeat center center fixed;
-            background-size: cover; margin: 0; color: white;
+            background-size: cover; margin: 0; color: white; min-height: 100vh;
         }
 
+        /* 頂部導覽 */
         nav {
             background: rgba(0,0,0,0.85); padding: 15px 25px;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 2px solid var(--wiki-gold);
             position: sticky; top: 0; z-index: 100;
         }
-        .login-btn { background: var(--wiki-gold); border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .login-btn:hover { background: #d4ac0d; }
 
-        /* 編輯區域 */
-        #admin-panel {
-            background: rgba(255,255,255,0.95); color: #333;
-            max-width: 600px; margin: 30px auto; padding: 25px;
-            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* 登入卡片 (未登入時顯示在中間) */
+        #login-overlay {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95); padding: 40px; border-radius: 20px;
+            text-align: center; color: #333; box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+            z-index: 200; width: 320px;
         }
-        #admin-panel h3 { margin-top: 0; color: var(--wiki-dark); border-bottom: 2px solid var(--wiki-gold); padding-bottom: 10px; }
-        input, textarea { width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1em; }
-        
-        .save-btn { background: #27ae60; color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; }
-        .save-btn:active { transform: scale(0.98); }
+        .google-btn {
+            background: #4285F4; color: white; border: none; padding: 12px 24px;
+            border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;
+            display: flex; align-items: center; gap: 10px; margin: 20px auto 0;
+        }
 
-        /* Wiki 網格 */
+        /* 管理員懸浮新增按鈕 (右下角) */
+        #admin-fab {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; background: var(--wiki-gold);
+            border-radius: 50%; display: none; align-items: center; justify-content: center;
+            font-size: 30px; color: #000; cursor: pointer; border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 500;
+        }
+
+        /* 新增彈窗 (Modal) */
+        #add-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white; color: #333; padding: 30px; border-radius: 15px;
+            width: 90%; max-width: 500px; position: relative;
+        }
+        .modal-content input, .modal-content textarea {
+            width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+        }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 25px; cursor: pointer; color: #999; }
+
+        /* Wiki 卡片排版 */
         #wiki-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 30px; padding: 40px; max-width: 1400px; margin: auto;
         }
-        
-        /* 角色卡片排版：文字在上，圖片在下 */
         .char-card {
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
-            padding: 0; overflow: hidden; display: flex; flex-direction: column;
-            position: relative; transition: 0.3s;
+            background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+            transition: 0.3s;
         }
-        .char-card:hover { border-color: var(--wiki-gold); transform: translateY(-5px); }
-
-        .char-content { padding: 20px; flex-grow: 1; }
-        .char-name { font-size: 1.6em; color: var(--wiki-gold); font-weight: 900; margin-bottom: 10px; }
-        .char-desc { font-size: 1em; line-height: 1.6; color: #eee; white-space: pre-wrap; }
-        
-        .char-divider { border-top: 1px solid rgba(255,255,255,0.2); margin: 0 20px; }
-        
-        .char-image { 
-            width: 100%; max-height: 400px; object-fit: contain; 
-            background: #111; display: block; 
-        }
+        .char-card:hover { border-color: var(--wiki-gold); }
+        .char-content { padding: 20px; }
+        .char-name { font-size: 1.5em; color: var(--wiki-gold); margin-bottom: 8px; }
+        .char-image { width: 100%; height: 250px; object-fit: cover; background: #000; }
         
         .delete-btn {
-            background: #e74c3c; color: white; border: none; padding: 6px 12px;
-            border-radius: 4px; cursor: pointer; position: absolute; top: 15px; right: 15px;
-            font-size: 0.8em; z-index: 5; display: none;
+            background: #e74c3c; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; float: right;
         }
     </style>
 </head>
@@ -70,22 +82,138 @@
 
     <nav>
         <h2>🎮 角色 Wiki 系統</h2>
-        <div id="auth-section">
-            <button class="login-btn" onclick="window.login()">Google 登入</button>
-        </div>
+        <div id="user-display"></div>
     </nav>
 
-    <div id="admin-panel">
-        <h3>📝 登錄新角色</h3>
-        <input type="text" id="char-name" placeholder="角色名稱">
-        <textarea id="char-desc" placeholder="輸入角色描述與文字資訊..." rows="5"></textarea>
-        <input type="text" id="char-img-url" placeholder="圖片連結網址">
-        <button class="save-btn" id="submit-btn" onclick="window.saveChar()">確認保存</button>
-        <p id="status-msg" style="text-align: center; font-size: 0.85em; margin-top: 10px; font-weight: bold;"></p>
+    <div id="login-overlay">
+        <h2 style="margin: 0">歡迎進入知識庫</h2>
+        <p style="color: #666">請登入 Google 帳號以繼續</p>
+        <button class="google-btn" onclick="window.login()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
+            Google 登入
+        </button>
+    </div>
+
+    <button id="admin-fab" onclick="window.toggleModal(true)">+</button>
+
+    <div id="add-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="window.toggleModal(false)">&times;</span>
+            <h3 style="margin-top:0">登錄新角色</h3>
+            <input type="text" id="char-name" placeholder="角色名稱">
+            <textarea id="char-desc" placeholder="角色描述..." rows="4"></textarea>
+            <input type="text" id="char-img-url" placeholder="圖片網址">
+            <button class="save-btn" onclick="window.saveChar()" style="background:var(--wiki-green); color:white; border:none; width:100%; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">儲存資料</button>
+        </div>
     </div>
 
     <div id="wiki-grid"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove } from "
+        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
+            authDomain: "webhw-eca0a.firebaseapp.com",
+            projectId: "webhw-eca0a",
+            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com",
+            appId: "1:334763145278:web:fee884425309a3e471b96f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const adminEmail = "shironya167@gmail.com";
+
+        // 登入功能
+        window.login = () => signInWithPopup(auth, provider).catch(err => alert("登入失敗，請確認 Firebase 設定！"));
+        window.logout = () => signOut(auth);
+
+        // 彈窗控制
+        window.toggleModal = (show) => {
+            document.getElementById('add-modal').style.display = show ? 'flex' : 'none';
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            const loginOverlay = document.getElementById('login-overlay');
+            const adminFab = document.getElementById('admin-fab');
+            const userDisplay = document.getElementById('user-display');
+
+            if (user) {
+                loginOverlay.style.display = 'none';
+                userDisplay.innerHTML = `<span>👋 ${user.displayName}</span> <button onclick="window.logout()" style="margin-left:10px; cursor:pointer">登出</button>`;
+                
+                // 儲存用戶到資料庫 (自己創建帳號紀錄)
+                set(ref(db, 'users/' + user.uid), {
+                    name: user.displayName,
+                    email: user.email,
+                    lastLogin: Date.now()
+                });
+
+                // 如果是管理員
+                if (user.email === adminEmail) {
+                    adminFab.style.display = 'flex';
+                } else {
+                    adminFab.style.display = 'none';
+                }
+            } else {
+                loginOverlay.style.display = 'block';
+                adminFab.style.display = 'none';
+                userDisplay.innerHTML = '';
+            }
+            loadWiki();
+        });
+
+        // 保存角色
+        window.saveChar = () => {
+            const name = document.getElementById('char-name').value.trim();
+            const desc = document.getElementById('char-desc').value.trim();
+            const img = document.getElementById('char-img-url').value.trim();
+
+            if (!name || !desc) return alert("請填寫必要資訊");
+
+            push(ref(db, 'characters'), {
+                name, desc, img: img || 'https://via.placeholder.com/400x250',
+                author: auth.currentUser.email
+            }).then(() => {
+                window.toggleModal(false);
+                document.getElementById('char-name').value = '';
+                document.getElementById('char-desc').value = '';
+                document.getElementById('char-img-url').value = '';
+            });
+        };
+
+        window.deleteChar = (id) => {
+            if (confirm("刪除此資料？")) remove(ref(db, `characters/${id}`));
+        };
+
+        function loadWiki() {
+            onValue(ref(db, 'characters'), (snapshot) => {
+                const grid = document.getElementById('wiki-grid');
+                grid.innerHTML = '';
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).reverse().forEach(key => {
+                        const c = data[key];
+                        const isAdmin = auth.currentUser && auth.currentUser.email === adminEmail;
+                        const div = document.createElement('div');
+                        div.className = 'char-card';
+                        div.innerHTML = `
+                            <div class="char-content">
+                                ${isAdmin ? `<button class="delete-btn" onclick="window.deleteChar('${key}')">刪除</button>` : ''}
+                                <div class="char-name">${c.name}</div>
+                                <div class="char-desc">${c.desc}</div>
+                            </div>
+                            <img src="${c.img}" class="char-image">
+                        `;
+                        grid.appendChild(div);
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

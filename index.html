@@ -3,77 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的公開佈告欄</title>
+    <title>Galeria - 創意幾何佈告欄</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/draggabilly@3/dist/draggabilly.pkgd.min.js"></script>
     <style>
-        body { background-color: #5d8a97; min-height: 100vh; font-family: sans-serif; }
-        .masonry-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 24px;
+        /* 幾何網格背景 */
+        body { 
+            background-color: #0f172a; 
+            background-image: linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(90deg, #1e293b 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: white;
+            min-height: 100vh;
         }
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
+        /* 幾何切角卡片 */
+        .geo-card {
+            background: white;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 90%, 90% 100%, 0% 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        /* 卡片懸浮效果 */
-        .post-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+        .geo-card:hover { transform: scale(1.02) rotate(1deg); }
+        
+        /* 玻璃擬態彈窗 - 可拖動 */
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            cursor: grab;
+        }
+        .glass-modal:active { cursor: grabbing; }
+        
+        /* 金屬質感輸入框 */
+        .metal-input {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px;
+            color: white;
+        }
     </style>
 </head>
 <body>
 
-    <nav class="bg-black/20 backdrop-blur-md p-4 flex justify-between items-center text-white sticky top-0 z-40">
-        <h1 class="text-xl font-bold tracking-tight">公開佈告欄</h1>
-        <div id="auth-status">
-            <button id="login-nav-btn" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold">載入中...</button>
+    <nav class="p-6 flex justify-between items-center border-b border-white/10">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-amber-400 rounded-full"></div>
+            <span class="text-2xl font-black tracking-widest uppercase">Galeria</span>
         </div>
+        <div id="auth-status"></div>
     </nav>
 
-    <div id="post-container" class="masonry-grid">
+    <div id="post-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-10">
         </div>
 
-    <button id="add-btn" class="fixed bottom-8 right-8 bg-white text-gray-900 w-16 h-16 rounded-full shadow-2xl text-4xl font-light flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+    <button id="add-btn" class="fixed bottom-10 right-10 w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-200 text-black rounded-full shadow-[0_0_30px_rgba(251,191,36,0.4)] text-5xl flex items-center justify-center z-50 hover:rotate-90 transition-transform">
         +
     </button>
 
-    <div id="post-modal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50 px-4">
-        <div class="bg-zinc-900 w-full max-w-xl rounded-[2rem] p-8 shadow-2xl border border-zinc-800">
-            <div class="flex justify-between items-center mb-6">
-                <input id="new-title" type="text" placeholder="主題" class="bg-transparent text-white text-3xl font-bold focus:outline-none w-full placeholder-zinc-700">
-                <button id="submit-post" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-200 transition">發佈</button>
-            </div>
-            
-            <div class="border-2 border-dashed border-zinc-700 rounded-2xl h-48 flex items-center justify-center gap-8 mb-6 text-zinc-500">
-                <button title="檔案" class="hover:text-white text-3xl transition">📄</button>
-                <button title="連結" class="hover:text-white text-3xl transition">🔗</button>
-                <button title="相機" class="hover:text-white text-3xl transition">📷</button>
-                <button title="搜尋" class="hover:text-white text-3xl transition">🔍</button>
-            </div>
+    <div id="post-modal" class="fixed top-1/4 left-1/3 w-[450px] glass-modal p-8 hidden z-[60]">
+        <div class="flex justify-between items-center mb-6">
+            <input id="new-title" type="text" placeholder="輸入靈感主題..." class="bg-transparent text-2xl font-bold focus:outline-none w-full border-b border-white/20 pb-2">
+            <button id="submit-post" class="ml-4 bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-2 rounded-full font-bold text-sm">發佈到展版</button>
+        </div>
+        
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <button class="metal-input hover:bg-white/10">📄</button>
+            <button class="metal-input hover:bg-white/10">🔗</button>
+            <button class="metal-input hover:bg-white/10">📷</button>
+            <button class="metal-input hover:bg-white/10">🎨</button>
+        </div>
 
-            <textarea id="new-content" placeholder="寫點美好的內容..." class="bg-transparent text-zinc-300 w-full h-40 resize-none focus:outline-none text-lg placeholder-zinc-800"></textarea>
-            
-            <div class="flex justify-end mt-4">
-                <button id="close-modal" class="text-zinc-500 hover:text-zinc-300 transition text-sm">取消編輯</button>
-            </div>
+        <textarea id="new-content" placeholder="在這裡描述你的創意細節..." class="metal-input w-full h-32 focus:outline-none focus:border-amber-400 transition-colors"></textarea>
+        
+        <div class="mt-4 flex justify-between items-center">
+            <div class="w-10 h-10 rounded-full bg-conic from-red-500 via-blue-500 to-green-500"></div>
+            <button onclick="document.getElementById('post-modal').classList.add('hidden')" class="text-white/40 text-xs hover:text-white">放棄編輯</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, arrayUnion, arrayRemove, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-        // 你的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
-            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com",
             projectId: "webhw-eca0a",
             storageBucket: "webhw-eca0a.firebasestorage.app",
             messagingSenderId: "334763145278",
-            appId: "1:334763145278:web:fee884425309a3e471b96f",
-            measurementId: "G-DX84SV6K8R"
+            appId: "1:334763145278:web:fee884425309a3e471b96f"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -81,91 +101,111 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        const addBtn = document.getElementById('add-btn');
-        const modal = document.getElementById('post-modal');
-        const authStatus = document.getElementById('auth-status');
+        // 初始化拖動功能
+        const draggie = new Draggabilly('#post-modal');
 
-        // --- 1. 偵測登入狀態 ---
+        // 登入邏輯
         onAuthStateChanged(auth, (user) => {
+            const statusBox = document.getElementById('auth-status');
             if (user) {
-                // 已登入：顯示頭像與登出按鈕
-                authStatus.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-white/20">
-                        <button id="logout-btn" class="text-sm opacity-70 hover:opacity-100">登出</button>
-                    </div>
-                `;
-                document.getElementById('logout-btn').onclick = () => signOut(auth);
+                statusBox.innerHTML = `<button id="logout" class="bg-white/10 px-4 py-2 rounded-full text-sm">Hi, ${user.displayName} (登出)</button>`;
+                document.getElementById('logout').onclick = () => signOut(auth);
             } else {
-                // 未登入：顯示登入按鈕
-                authStatus.innerHTML = `<button id="login-nav-btn" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold">Google 登入</button>`;
-                document.getElementById('login-nav-btn').onclick = () => signInWithPopup(auth, provider);
+                statusBox.innerHTML = `<button id="login" class="bg-amber-400 text-black px-4 py-2 rounded-full font-bold">Google 登入</button>`;
+                document.getElementById('login').onclick = () => signInWithPopup(auth, provider);
             }
         });
 
-        // --- 2. 新增按鈕偵測 (你的需求重點) ---
-        addBtn.onclick = () => {
-            const user = auth.currentUser;
-            if (user) {
-                // 已經登入：直接打開深色彈窗
-                modal.classList.remove('hidden');
-            } else {
-                // 未登入：提示並觸發登入
-                alert("請先登入 Google 帳號即可發佈貼文！");
-                signInWithPopup(auth, provider).then((result) => {
-                    // 登入成功後，自動幫他開啟彈窗
-                    modal.classList.remove('hidden');
-                }).catch((error) => {
-                    console.log("登入被取消或失敗");
-                });
-            }
+        // 打開視窗
+        document.getElementById('add-btn').onclick = () => {
+            if (!auth.currentUser) return alert("請先登入！");
+            document.getElementById('post-modal').classList.remove('hidden');
         };
 
-        // --- 3. 關閉彈窗 ---
-        document.getElementById('close-modal').onclick = () => modal.classList.add('hidden');
-
-        // --- 4. 發佈功能 ---
+        // 發佈功能
         document.getElementById('submit-post').onclick = async () => {
-            const title = document.getElementById('new-title').value;
-            const content = document.getElementById('new-content').value;
+            const t = document.getElementById('new-title').value;
+            const c = document.getElementById('new-content').value;
+            if (!t) return;
 
-            if (!title) return alert("請輸入主題！");
-
-            try {
-                await addDoc(collection(db, "posts"), {
-                    title: title,
-                    content: content,
-                    authorName: auth.currentUser.displayName,
-                    createdAt: serverTimestamp(),
-                    uid: auth.currentUser.uid
-                });
-                modal.classList.add('hidden');
-                document.getElementById('new-title').value = '';
-                document.getElementById('new-content').value = '';
-            } catch (e) {
-                alert("發佈失敗！請確認 Firebase Rules 是否允許登入者寫入。");
-            }
+            await addDoc(collection(db, "posts"), {
+                title: t, content: c,
+                author: auth.currentUser.displayName,
+                uid: auth.currentUser.uid,
+                likes: [], // 點讚名單
+                createdAt: serverTimestamp()
+            });
+            document.getElementById('post-modal').classList.add('hidden');
         };
 
-        // --- 5. 監聽資料庫渲染貼文 ---
+        // 監聽與渲染
         const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
             const container = document.getElementById('post-container');
             container.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const post = doc.data();
-                const date = post.createdAt?.toDate().toLocaleDateString() || "傳送中...";
-                container.innerHTML += `
-                    <div class="post-card bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col p-6">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-2">${post.title}</h3>
-                        <p class="text-gray-600 mb-6 leading-relaxed">${post.content || ''}</p>
-                        <div class="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
-                            <span class="font-medium text-gray-500">${post.authorName || '匿名用戶'}</span>
-                            <span>${date}</span>
+            snapshot.forEach((fbDoc) => {
+                const data = fbDoc.data();
+                const id = fbDoc.id;
+                const liked = data.likes?.includes(auth.currentUser?.uid);
+
+                const card = document.createElement('div');
+                card.className = "geo-card p-6 text-black flex flex-col min-h-[300px]";
+                card.innerHTML = `
+                    <div class="text-xs font-bold text-amber-600 mb-2 uppercase tracking-tighter">Idea No. ${id.slice(0,4)}</div>
+                    <h3 class="text-2xl font-black mb-4 leading-tight">${data.title}</h3>
+                    <p class="text-gray-600 flex-grow">${data.content}</p>
+                    
+                    <div class="mt-6 border-t pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold opacity-50">BY: ${data.author}</span>
+                            <button onclick="toggleLike('${id}', ${liked})" class="flex items-center gap-1 ${liked ? 'text-red-500' : 'text-gray-400'}">
+                                ${liked ? '❤️' : '🤍'} ${data.likes?.length || 0}
+                            </button>
                         </div>
-                    </div>`;
+                        <div class="mt-4">
+                            <input type="text" placeholder="留下你的評論..." 
+                                onkeydown="if(event.key==='Enter') addComment('${id}', this.value, this)"
+                                class="w-full text-xs border-b border-gray-200 focus:outline-none py-1">
+                            <div id="comments-${id}" class="mt-2 space-y-1 text-[10px] text-gray-500 max-h-24 overflow-y-auto">
+                                </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                loadComments(id);
             });
         });
+
+        // 點讚功能 (一人只能按一次)
+        window.toggleLike = async (id, alreadyLiked) => {
+            if (!auth.currentUser) return alert("登入後才能點讚！");
+            const postRef = doc(db, "posts", id);
+            await updateDoc(postRef, {
+                likes: alreadyLiked ? arrayRemove(auth.currentUser.uid) : arrayUnion(auth.currentUser.uid)
+            });
+        };
+
+        // 留言功能
+        window.addComment = async (postId, text, input) => {
+            if (!auth.currentUser) return alert("登入後才能留言！");
+            if (!text.trim()) return;
+            await addDoc(collection(db, `posts/${postId}/comments`), {
+                text: text,
+                user: auth.currentUser.displayName,
+                createdAt: serverTimestamp()
+            });
+            input.value = '';
+        };
+
+        // 載入留言
+        function loadComments(postId) {
+            const qC = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
+            onSnapshot(qC, (snap) => {
+                const box = document.getElementById(`comments-${postId}`);
+                if (!box) return;
+                box.innerHTML = snap.docs.map(d => `<div><b>${d.data().user}:</b> ${d.data().text}</div>`).join('');
+            });
+        }
     </script>
 </body>
 </html>

@@ -1,215 +1,174 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 遊戲角色 Wiki 🎮</title>
+    <title>佈告欄</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --wiki-gold: #f1c40f; --wiki-dark: #2c3e50; --wiki-green: #27ae60; }
-        body {
-            font-family: "Noto Sans TC", sans-serif;
-            background: var(--wiki-dark) url('夜景.jpg') no-repeat center center fixed;
-            background-size: cover; margin: 0; color: white; min-height: 100vh;
+        body { background-color: #5d8a97; min-height: 100vh; font-family: sans-serif; }
+        /* 瀑布流網格 */
+        .masonry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 24px;
         }
-
-        nav {
-            background: rgba(0,0,0,0.85); padding: 15px 25px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--wiki-gold);
-            position: sticky; top: 0; z-index: 100;
-        }
-
-        /* 登入遮罩 */
-        #login-overlay {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(255,255,255,0.95); padding: 40px; border-radius: 20px;
-            text-align: center; color: #333; box-shadow: 0 15px 50px rgba(0,0,0,0.5);
-            z-index: 200; width: 320px;
-        }
-        .google-btn {
-            background: #4285F4; color: white; border: none; padding: 12px 24px;
-            border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;
-            display: flex; align-items: center; gap: 10px; margin: 20px auto 0;
-        }
-
-        /* 右下角新增按鈕 */
-        #admin-fab {
-            position: fixed; bottom: 30px; right: 30px;
-            width: 65px; height: 65px; background: var(--wiki-gold);
-            border-radius: 50%; display: none; align-items: center; justify-content: center;
-            font-size: 35px; color: #000; cursor: pointer; border: none;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5); z-index: 500; transition: 0.3s;
-        }
-        #admin-fab:hover { transform: scale(1.1) rotate(90deg); }
-
-        /* 新增彈窗 */
-        #add-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center;
-            z-index: 1000; backdrop-filter: blur(5px);
-        }
-        .modal-content {
-            background: white; color: #333; padding: 35px; border-radius: 20px;
-            width: 90%; max-width: 500px; position: relative;
-        }
-        .modal-content input, .modal-content textarea {
-            width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;
-        }
-        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #bbb; }
-
-        /* Wiki 網格 */
-        #wiki-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px; padding: 40px; max-width: 1400px; margin: auto;
-        }
-        .char-card {
-            background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px; overflow: hidden; display: flex; flex-direction: column;
-            transition: 0.3s; position: relative;
-        }
-        .char-card:hover { border-color: var(--wiki-gold); transform: translateY(-5px); }
-        .char-content { padding: 25px; }
-        .char-name { font-size: 1.7em; color: var(--wiki-gold); margin-bottom: 10px; font-weight: 900; }
-        .char-desc { font-size: 1em; color: #ddd; line-height: 1.6; white-space: pre-wrap; }
-        .char-image { width: 100%; height: auto; max-height: 350px; object-fit: contain; background: #111; }
-        
-        .delete-btn {
-            background: #e74c3c; color: white; border: none; padding: 6px 12px;
-            border-radius: 5px; cursor: pointer; position: absolute; top: 15px; right: 15px;
-            font-size: 0.8em; display: none; z-index: 10;
+        /* 彈窗毛玻璃背景 */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
         }
     </style>
 </head>
 <body>
 
-    <nav>
-        <h2>🎮 角色 Wiki 系統</h2>
-        <div id="user-display"></div>
+    <nav class="bg-black/20 backdrop-blur-md p-4 flex justify-between items-center text-white sticky top-0 z-40">
+        <h1 class="text-xl font-bold tracking-tight">我的佈告欄</h1>
+        <div id="auth-status">
+            <button id="login-btn" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold hover:bg-gray-100 transition">Google 登入</button>
+        </div>
     </nav>
 
-    <div id="login-overlay">
-        <h2>歡迎進入知識庫</h2>
-        <p style="color: #666">請登入 Google 帳號以獲取訪問權限</p>
-        <button class="google-btn" onclick="window.login()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
-            使用 Google 登入
-        </button>
-    </div>
+    <div id="post-container" class="masonry-grid">
+        </div>
 
-    <button id="admin-fab" onclick="window.toggleModal(true)">+</button>
+    <button id="add-btn" class="hidden fixed bottom-8 right-8 bg-white text-gray-900 w-16 h-16 rounded-full shadow-2xl text-4xl font-light flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+        +
+    </button>
 
-    <div id="add-modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="window.toggleModal(false)">&times;</span>
-            <h3 style="margin-top:0; border-bottom: 2px solid var(--wiki-gold); padding-bottom: 10px;">🛡️ 登錄角色資訊</h3>
-            <input type="text" id="char-name" placeholder="角色名稱">
-            <textarea id="char-desc" placeholder="角色描述 (技能、背景等)..." rows="6"></textarea>
-            <input type="text" id="char-img-url" placeholder="圖片 URL">
-            <button onclick="window.saveChar()" style="background:var(--wiki-green); color:white; border:none; width:100%; padding:15px; border-radius:10px; cursor:pointer; font-size: 1.1em; font-weight:bold;">發布至 Wiki</button>
+    <div id="post-modal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50 px-4">
+        <div class="bg-zinc-900 w-full max-w-xl rounded-[2rem] p-8 shadow-2xl border border-zinc-800">
+            <div class="flex justify-between items-center mb-6">
+                <input id="new-title" type="text" placeholder="主題" class="bg-transparent text-white text-3xl font-bold focus:outline-none w-full placeholder-zinc-600">
+                <button id="submit-post" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-200 transition">發佈</button>
+            </div>
+            
+            <div class="border-2 border-dashed border-zinc-700 rounded-2xl h-48 flex items-center justify-center gap-8 mb-6 text-zinc-500">
+                <button title="檔案" class="hover:text-white text-3xl transition">📄</button>
+                <button title="連結" class="hover:text-white text-3xl transition">🔗</button>
+                <button title="相機" class="hover:text-white text-3xl transition">📷</button>
+                <button title="搜尋" class="hover:text-white text-3xl transition">🔍</button>
+            </div>
+
+            <textarea id="new-content" placeholder="寫點美好的內容..." class="bg-transparent text-zinc-300 w-full h-40 resize-none focus:outline-none text-lg placeholder-zinc-700"></textarea>
+            
+            <div class="flex justify-end mt-4">
+                <button id="close-modal" class="text-zinc-500 hover:text-zinc-300 transition text-sm">取消編輯</button>
+            </div>
         </div>
     </div>
 
-    <div id="wiki-grid"></div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
+        // 1. 你的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
             authDomain: "webhw-eca0a.firebaseapp.com",
-            projectId: "webhw-eca0a",
             databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com",
-            appId: "1:334763145278:web:fee884425309a3e471b96f"
+            projectId: "webhw-eca0a",
+            storageBucket: "webhw-eca0a.firebasestorage.app",
+            messagingSenderId: "334763145278",
+            appId: "1:334763145278:web:fee884425309a3e471b96f",
+            measurementId: "G-DX84SV6K8R"
         };
 
+        // 2. 【核心設定】請將下方字串替換為你在 Firestore 規則中允許的那個 UID
+        const ADMIN_UID = "在這裡輸入你的_UID_字串"; 
+
+        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        let isAdmin = false;
+        // DOM 元素
+        const loginBtn = document.getElementById('login-btn');
+        const authStatus = document.getElementById('auth-status');
+        const addBtn = document.getElementById('add-btn');
+        const modal = document.getElementById('post-modal');
+        const postContainer = document.getElementById('post-container');
 
-        window.login = () => signInWithPopup(auth, provider);
-        window.logout = () => signOut(auth);
-        window.toggleModal = (show) => document.getElementById('add-modal').style.display = show ? 'flex' : 'none';
+        // 登入事件
+        loginBtn.addEventListener('click', () => signInWithPopup(auth, provider));
 
-        onAuthStateChanged(auth, async (user) => {
-            const loginOverlay = document.getElementById('login-overlay');
-            const adminFab = document.getElementById('admin-fab');
-            const userDisplay = document.getElementById('user-display');
-
+        // 監聽登入狀態
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                loginOverlay.style.display = 'none';
-                userDisplay.innerHTML = `<span>👤 ${user.displayName}</span> <button onclick="window.logout()" style="margin-left:10px; border:none; background:none; color:white; text-decoration:underline; cursor:pointer">登出</button>`;
-                
-                // --- 核心改動：從資料庫偵測管理員權限 ---
-                const adminSnap = await get(ref(db, `admins/${user.uid}`));
-                isAdmin = adminSnap.exists() && adminSnap.val() === true;
+                authStatus.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-white/20">
+                        <button id="logout-link" class="text-sm opacity-70 hover:opacity-100">登出</button>
+                    </div>
+                `;
+                document.getElementById('logout-link').onclick = () => signOut(auth);
 
-                if (isAdmin) {
-                    adminFab.style.display = 'flex';
+                // 權限檢查：只有 UID 匹配才顯示新增按鈕
+                if (user.uid === ADMIN_UID) {
+                    addBtn.classList.remove('hidden');
                 } else {
-                    adminFab.style.display = 'none';
+                    addBtn.classList.add('hidden');
                 }
             } else {
-                loginOverlay.style.display = 'block';
-                adminFab.style.display = 'none';
-                userDisplay.innerHTML = '';
-                isAdmin = false;
+                authStatus.innerHTML = `<button id="re-login" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold">Google 登入</button>`;
+                document.getElementById('re-login').onclick = () => signInWithPopup(auth, provider);
+                addBtn.classList.add('hidden');
             }
-            loadWiki();
         });
 
-        window.saveChar = () => {
-            if (!isAdmin) return alert("抱歉，您沒有管理員權限。");
-            const name = document.getElementById('char-name').value.trim();
-            const desc = document.getElementById('char-desc').value.trim();
-            const img = document.getElementById('char-img-url').value.trim();
+        // 彈窗控制
+        addBtn.onclick = () => modal.classList.remove('hidden');
+        document.getElementById('close-modal').onclick = () => modal.classList.add('hidden');
 
-            if (!name || !desc) return alert("請填寫角色名稱與描述！");
+        // 發佈功能
+        document.getElementById('submit-post').onclick = async () => {
+            const title = document.getElementById('new-title').value;
+            const content = document.getElementById('new-content').value;
 
-            push(ref(db, 'characters'), {
-                name, desc, img: img || 'https://via.placeholder.com/400x250?text=No+Image',
-                timestamp: Date.now()
-            }).then(() => {
-                window.toggleModal(false);
-                document.getElementById('char-name').value = '';
-                document.getElementById('char-desc').value = '';
-                document.getElementById('char-img-url').value = '';
-            });
-        };
+            if (!title) return alert("請輸入主題！");
 
-        window.deleteChar = (id) => {
-            if (confirm("確定要永久刪除此角色資料嗎？")) {
-                remove(ref(db, `characters/${id}`)).catch(() => alert("刪除失敗，請檢查權限。"));
+            try {
+                await addDoc(collection(db, "posts"), {
+                    title: title,
+                    content: content,
+                    createdAt: serverTimestamp(),
+                    uid: auth.currentUser.uid
+                });
+                modal.classList.add('hidden');
+                document.getElementById('new-title').value = '';
+                document.getElementById('new-content').value = '';
+            } catch (e) {
+                alert("發佈失敗，請確認你的 UID 權限是否正確！");
+                console.error(e);
             }
         };
 
-        function loadWiki() {
-            onValue(ref(db, 'characters'), (snapshot) => {
-                const grid = document.getElementById('wiki-grid');
-                grid.innerHTML = '';
-                const data = snapshot.val();
-                if (data) {
-                    Object.keys(data).reverse().forEach(key => {
-                        const c = data[key];
-                        const div = document.createElement('div');
-                        div.className = 'char-card';
-                        div.innerHTML = `
-                            <button class="delete-btn" style="display:${isAdmin ? 'block' : 'none'}" onclick="window.deleteChar('${key}')">刪除</button>
-                            <div class="char-content">
-                                <div class="char-name">${c.name}</div>
-                                <div class="char-desc">${c.desc}</div>
-                            </div>
-                            <img src="${c.img}" class="char-image" onerror="this.src='https://via.placeholder.com/400x250?text=Image+Error'">
-                        `;
-                        grid.appendChild(div);
-                    });
-                }
+        // 監聽 Firestore 數據並渲染卡片
+        const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            postContainer.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const post = doc.data();
+                const date = post.createdAt?.toDate().toLocaleDateString() || "剛才";
+                
+                const card = `
+                    <div class="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-shadow overflow-hidden flex flex-col">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold text-gray-800 mb-3">${post.title}</h3>
+                            <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">${post.content || ''}</p>
+                        </div>
+                        <div class="mt-auto px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                            <span>${date}</span>
+                            <span class="bg-gray-200 px-2 py-1 rounded">貼文</span>
+                        </div>
+                    </div>
+                `;
+                postContainer.innerHTML += card;
             });
-        }
+        });
     </script>
 </body>
 </html>

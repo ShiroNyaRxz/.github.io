@@ -12,7 +12,6 @@
             background-size: cover; margin: 0; color: white; min-height: 100vh;
         }
 
-        /* 頂部導覽 */
         nav {
             background: rgba(0,0,0,0.85); padding: 15px 25px;
             display: flex; justify-content: space-between; align-items: center;
@@ -20,7 +19,7 @@
             position: sticky; top: 0; z-index: 100;
         }
 
-        /* 登入卡片 (未登入時顯示在中間) */
+        /* 登入遮罩 */
         #login-overlay {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(255,255,255,0.95); padding: 40px; border-radius: 20px;
@@ -33,48 +32,51 @@
             display: flex; align-items: center; gap: 10px; margin: 20px auto 0;
         }
 
-        /* 管理員懸浮新增按鈕 (右下角) */
+        /* 右下角新增按鈕 */
         #admin-fab {
             position: fixed; bottom: 30px; right: 30px;
-            width: 60px; height: 60px; background: var(--wiki-gold);
+            width: 65px; height: 65px; background: var(--wiki-gold);
             border-radius: 50%; display: none; align-items: center; justify-content: center;
-            font-size: 30px; color: #000; cursor: pointer; border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 500;
+            font-size: 35px; color: #000; cursor: pointer; border: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5); z-index: 500; transition: 0.3s;
         }
+        #admin-fab:hover { transform: scale(1.1) rotate(90deg); }
 
-        /* 新增彈窗 (Modal) */
+        /* 新增彈窗 */
         #add-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
-            z-index: 1000;
+            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(5px);
         }
         .modal-content {
-            background: white; color: #333; padding: 30px; border-radius: 15px;
+            background: white; color: #333; padding: 35px; border-radius: 20px;
             width: 90%; max-width: 500px; position: relative;
         }
         .modal-content input, .modal-content textarea {
-            width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+            width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;
         }
-        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 25px; cursor: pointer; color: #999; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #bbb; }
 
-        /* Wiki 卡片排版 */
+        /* Wiki 網格 */
         #wiki-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 30px; padding: 40px; max-width: 1400px; margin: auto;
         }
         .char-card {
             background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
-            transition: 0.3s;
+            border-radius: 15px; overflow: hidden; display: flex; flex-direction: column;
+            transition: 0.3s; position: relative;
         }
-        .char-card:hover { border-color: var(--wiki-gold); }
-        .char-content { padding: 20px; }
-        .char-name { font-size: 1.5em; color: var(--wiki-gold); margin-bottom: 8px; }
-        .char-image { width: 100%; height: 250px; object-fit: cover; background: #000; }
+        .char-card:hover { border-color: var(--wiki-gold); transform: translateY(-5px); }
+        .char-content { padding: 25px; }
+        .char-name { font-size: 1.7em; color: var(--wiki-gold); margin-bottom: 10px; font-weight: 900; }
+        .char-desc { font-size: 1em; color: #ddd; line-height: 1.6; white-space: pre-wrap; }
+        .char-image { width: 100%; height: auto; max-height: 350px; object-fit: contain; background: #111; }
         
         .delete-btn {
-            background: #e74c3c; color: white; border: none; padding: 5px 10px;
-            border-radius: 4px; cursor: pointer; float: right;
+            background: #e74c3c; color: white; border: none; padding: 6px 12px;
+            border-radius: 5px; cursor: pointer; position: absolute; top: 15px; right: 15px;
+            font-size: 0.8em; display: none; z-index: 10;
         }
     </style>
 </head>
@@ -86,11 +88,11 @@
     </nav>
 
     <div id="login-overlay">
-        <h2 style="margin: 0">歡迎進入知識庫</h2>
-        <p style="color: #666">請登入 Google 帳號以繼續</p>
+        <h2>歡迎進入知識庫</h2>
+        <p style="color: #666">請登入 Google 帳號以獲取訪問權限</p>
         <button class="google-btn" onclick="window.login()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
-            Google 登入
+            使用 Google 登入
         </button>
     </div>
 
@@ -99,11 +101,11 @@
     <div id="add-modal">
         <div class="modal-content">
             <span class="close-modal" onclick="window.toggleModal(false)">&times;</span>
-            <h3 style="margin-top:0">登錄新角色</h3>
+            <h3 style="margin-top:0; border-bottom: 2px solid var(--wiki-gold); padding-bottom: 10px;">🛡️ 登錄角色資訊</h3>
             <input type="text" id="char-name" placeholder="角色名稱">
-            <textarea id="char-desc" placeholder="角色描述..." rows="4"></textarea>
-            <input type="text" id="char-img-url" placeholder="圖片網址">
-            <button class="save-btn" onclick="window.saveChar()" style="background:var(--wiki-green); color:white; border:none; width:100%; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">儲存資料</button>
+            <textarea id="char-desc" placeholder="角色描述 (技能、背景等)..." rows="6"></textarea>
+            <input type="text" id="char-img-url" placeholder="圖片 URL">
+            <button onclick="window.saveChar()" style="background:var(--wiki-green); color:white; border:none; width:100%; padding:15px; border-radius:10px; cursor:pointer; font-size: 1.1em; font-weight:bold;">發布至 Wiki</button>
         </div>
     </div>
 
@@ -111,7 +113,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -126,35 +128,27 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
-        const adminEmail = "shironya167@gmail.com";
 
-        // 登入功能
-        window.login = () => signInWithPopup(auth, provider).catch(err => alert("登入失敗，請確認 Firebase 設定！"));
+        let isAdmin = false;
+
+        window.login = () => signInWithPopup(auth, provider);
         window.logout = () => signOut(auth);
+        window.toggleModal = (show) => document.getElementById('add-modal').style.display = show ? 'flex' : 'none';
 
-        // 彈窗控制
-        window.toggleModal = (show) => {
-            document.getElementById('add-modal').style.display = show ? 'flex' : 'none';
-        };
-
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             const loginOverlay = document.getElementById('login-overlay');
             const adminFab = document.getElementById('admin-fab');
             const userDisplay = document.getElementById('user-display');
 
             if (user) {
                 loginOverlay.style.display = 'none';
-                userDisplay.innerHTML = `<span>👋 ${user.displayName}</span> <button onclick="window.logout()" style="margin-left:10px; cursor:pointer">登出</button>`;
+                userDisplay.innerHTML = `<span>👤 ${user.displayName}</span> <button onclick="window.logout()" style="margin-left:10px; border:none; background:none; color:white; text-decoration:underline; cursor:pointer">登出</button>`;
                 
-                // 儲存用戶到資料庫 (自己創建帳號紀錄)
-                set(ref(db, 'users/' + user.uid), {
-                    name: user.displayName,
-                    email: user.email,
-                    lastLogin: Date.now()
-                });
+                // --- 核心改動：從資料庫偵測管理員權限 ---
+                const adminSnap = await get(ref(db, `admins/${user.uid}`));
+                isAdmin = adminSnap.exists() && adminSnap.val() === true;
 
-                // 如果是管理員
-                if (user.email === adminEmail) {
+                if (isAdmin) {
                     adminFab.style.display = 'flex';
                 } else {
                     adminFab.style.display = 'none';
@@ -163,21 +157,22 @@
                 loginOverlay.style.display = 'block';
                 adminFab.style.display = 'none';
                 userDisplay.innerHTML = '';
+                isAdmin = false;
             }
             loadWiki();
         });
 
-        // 保存角色
         window.saveChar = () => {
+            if (!isAdmin) return alert("抱歉，您沒有管理員權限。");
             const name = document.getElementById('char-name').value.trim();
             const desc = document.getElementById('char-desc').value.trim();
             const img = document.getElementById('char-img-url').value.trim();
 
-            if (!name || !desc) return alert("請填寫必要資訊");
+            if (!name || !desc) return alert("請填寫角色名稱與描述！");
 
             push(ref(db, 'characters'), {
-                name, desc, img: img || 'https://via.placeholder.com/400x250',
-                author: auth.currentUser.email
+                name, desc, img: img || 'https://via.placeholder.com/400x250?text=No+Image',
+                timestamp: Date.now()
             }).then(() => {
                 window.toggleModal(false);
                 document.getElementById('char-name').value = '';
@@ -187,7 +182,9 @@
         };
 
         window.deleteChar = (id) => {
-            if (confirm("刪除此資料？")) remove(ref(db, `characters/${id}`));
+            if (confirm("確定要永久刪除此角色資料嗎？")) {
+                remove(ref(db, `characters/${id}`)).catch(() => alert("刪除失敗，請檢查權限。"));
+            }
         };
 
         function loadWiki() {
@@ -198,16 +195,15 @@
                 if (data) {
                     Object.keys(data).reverse().forEach(key => {
                         const c = data[key];
-                        const isAdmin = auth.currentUser && auth.currentUser.email === adminEmail;
                         const div = document.createElement('div');
                         div.className = 'char-card';
                         div.innerHTML = `
+                            <button class="delete-btn" style="display:${isAdmin ? 'block' : 'none'}" onclick="window.deleteChar('${key}')">刪除</button>
                             <div class="char-content">
-                                ${isAdmin ? `<button class="delete-btn" onclick="window.deleteChar('${key}')">刪除</button>` : ''}
                                 <div class="char-name">${c.name}</div>
                                 <div class="char-desc">${c.desc}</div>
                             </div>
-                            <img src="${c.img}" class="char-image">
+                            <img src="${c.img}" class="char-image" onerror="this.src='https://via.placeholder.com/400x250?text=Image+Error'">
                         `;
                         grid.appendChild(div);
                     });

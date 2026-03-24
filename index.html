@@ -12,154 +12,80 @@
             background-size: cover; margin: 0; color: white;
         }
 
-        /* 導覽列與登入 */
         nav {
-            background: rgba(0,0,0,0.8); padding: 10px 20px;
+            background: rgba(0,0,0,0.85); padding: 15px 25px;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 2px solid var(--wiki-gold);
+            position: sticky; top: 0; z-index: 100;
         }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .login-btn { background: var(--wiki-gold); border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .login-btn { background: var(--wiki-gold); border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .login-btn:hover { background: #d4ac0d; }
 
-        /* 編輯區域 (預設隱藏，管理員登入後才顯示) */
+        /* 編輯區域 */
         #admin-panel {
-            background: rgba(255,255,255,0.9); color: #333;
-            max-width: 600px; margin: 20px auto; padding: 20px;
-            border-radius: 10px; display: none;
+            background: rgba(255,255,255,0.95); color: #333;
+            max-width: 600px; margin: 30px auto; padding: 25px;
+            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        input, textarea { width: 100%; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        #admin-panel h3 { margin-top: 0; color: var(--wiki-dark); border-bottom: 2px solid var(--wiki-gold); padding-bottom: 10px; }
+        input, textarea { width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1em; }
+        
+        .save-btn { background: #27ae60; color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; }
+        .save-btn:active { transform: scale(0.98); }
 
-        /* 角色卡片網格 */
+        /* Wiki 網格 */
         #wiki-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px; padding: 40px; max-width: 1200px; margin: auto;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px; padding: 40px; max-width: 1400px; margin: auto;
         }
+        
+        /* 角色卡片排版：文字在上，圖片在下 */
         .char-card {
-            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 15px;
-            padding: 20px; position: relative; transition: 0.3s;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 0; overflow: hidden; display: flex; flex-direction: column;
+            position: relative; transition: 0.3s;
         }
-        .char-card:hover { transform: translateY(-5px); border-color: var(--wiki-gold); }
-        .char-name { font-size: 1.5em; color: var(--wiki-gold); font-weight: bold; margin-bottom: 10px; }
-        .char-desc { font-size: 0.9em; line-height: 1.6; height: 100px; overflow-y: auto; }
+        .char-card:hover { border-color: var(--wiki-gold); transform: translateY(-5px); }
+
+        .char-content { padding: 20px; flex-grow: 1; }
+        .char-name { font-size: 1.6em; color: var(--wiki-gold); font-weight: 900; margin-bottom: 10px; }
+        .char-desc { font-size: 1em; line-height: 1.6; color: #eee; white-space: pre-wrap; }
+        
+        .char-divider { border-top: 1px solid rgba(255,255,255,0.2); margin: 0 20px; }
+        
+        .char-image { 
+            width: 100%; max-height: 400px; object-fit: contain; 
+            background: #111; display: block; 
+        }
         
         .delete-btn {
-            background: #e74c3c; color: white; border: none;
-            padding: 5px 10px; border-radius: 5px; cursor: pointer;
-            position: absolute; top: 10px; right: 10px; display: none;
+            background: #e74c3c; color: white; border: none; padding: 6px 12px;
+            border-radius: 4px; cursor: pointer; position: absolute; top: 15px; right: 15px;
+            font-size: 0.8em; z-index: 5; display: none;
         }
     </style>
 </head>
 <body>
 
     <nav>
-        <h2>🎮 角色知識庫</h2>
-        <div class="user-info" id="auth-section">
-            <button class="login-btn" onclick="window.login()">Google 登入編輯</button>
+        <h2>🎮 角色 Wiki 系統</h2>
+        <div id="auth-section">
+            <button class="login-btn" onclick="window.login()">Google 登入</button>
         </div>
     </nav>
 
     <div id="admin-panel">
-        <h3>📝 新增/編輯角色 (管理員限定)</h3>
+        <h3>📝 登錄新角色</h3>
         <input type="text" id="char-name" placeholder="角色名稱">
-        <textarea id="char-desc" placeholder="角色技能與背景描述..."></textarea>
-        <button class="login-btn" id="submit-btn" onclick="window.saveChar()">保存角色資料</button>
-        <p id="cooldown-text" style="font-size: 0.8em; color: #666;"></p>
+        <textarea id="char-desc" placeholder="輸入角色描述與文字資訊..." rows="5"></textarea>
+        <input type="text" id="char-img-url" placeholder="圖片連結網址">
+        <button class="save-btn" id="submit-btn" onclick="window.saveChar()">確認保存</button>
+        <p id="status-msg" style="text-align: center; font-size: 0.85em; margin-top: 10px; font-weight: bold;"></p>
     </div>
 
     <div id="wiki-grid"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyB7ssgEtDNWVhbemhduXU7qD-31DCFPr4o",
-            authDomain: "webhw-eca0a.firebaseapp.com",
-            projectId: "webhw-eca0a",
-            databaseURL: "https://webhw-eca0a-default-rtdb.firebaseio.com",
-            appId: "1:334763145278:web:fee884425309a3e471b96f"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        
-        const adminEmail = "YOUR_EMAIL@gmail.com"; // ⚠️ 請改成你的 Google 信箱
-        let currentUser = null;
-
-        // 登入邏輯
-        window.login = () => signInWithPopup(auth, provider);
-        window.logout = () => signOut(auth);
-
-        // 監聽登入狀態
-        onAuthStateChanged(auth, (user) => {
-            const authSection = document.getElementById('auth-section');
-            const adminPanel = document.getElementById('admin-panel');
-            currentUser = user;
-
-            if (user) {
-                authSection.innerHTML = `<span>👋 ${user.displayName}</span> <button class="login-btn" style="background:#666" onclick="window.logout()">登出</button>`;
-                // 只有指定管理員可以看到編輯面板
-                if (user.email === adminEmail) {
-                    adminPanel.style.display = 'block';
-                    document.querySelectorAll('.delete-btn').forEach(b => b.style.display = 'block');
-                }
-            } else {
-                authSection.innerHTML = `<button class="login-btn" onclick="window.login()">Google 登入編輯</button>`;
-                adminPanel.style.display = 'none';
-            }
-        });
-
-        // 保存角色 (含 10 秒防護)
-        window.saveChar = () => {
-            const name = document.getElementById('char-name').value.trim();
-            const desc = document.getElementById('char-desc').value.trim();
-            const lastPost = localStorage.getItem('wiki_cooldown');
-            
-            if (Date.now() - lastPost < 10000) {
-                alert("請等待 10 秒冷卻時間");
-                return;
-            }
-
-            if (name && desc) {
-                push(ref(db, 'characters'), { name, desc }).then(() => {
-                    localStorage.setItem('wiki_cooldown', Date.now());
-                    document.getElementById('char-name').value = '';
-                    document.getElementById('char-desc').value = '';
-                }).catch(err => alert("權限不足：只有管理員可以編輯！"));
-            }
-        };
-
-        // 刪除角色
-        window.deleteChar = (id) => {
-            if (confirm("確定要刪除此角色嗎？")) {
-                remove(ref(db, `characters/${id}`)).catch(err => alert("權限不足"));
-            }
-        };
-
-        // 讀取資料
-        onValue(ref(db, 'characters'), (snapshot) => {
-            const grid = document.getElementById('wiki-grid');
-            grid.innerHTML = '';
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).forEach(key => {
-                    const c = data[key];
-                    const isAdmin = currentUser && currentUser.email === adminEmail;
-                    const div = document.createElement('div');
-                    div.className = 'char-card';
-                    div.innerHTML = `
-                        <button class="delete-btn" style="display:${isAdmin ? 'block' : 'none'}" onclick="window.deleteChar('${key}')">刪除</button>
-                        <div class="char-name">${c.name}</div>
-                        <div class="char-desc">${c.desc}</div>
-                    `;
-                    grid.appendChild(div);
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+        import { getDatabase, ref, push, onValue, remove } from "

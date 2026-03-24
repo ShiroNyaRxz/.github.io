@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galeria - 獨立展開修復版</title>
+    <title>Galeria - 專業版佈告欄</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/draggabilly@3/dist/draggabilly.pkgd.min.js"></script>
     <style>
@@ -13,30 +13,31 @@
             background-size: 40px 40px;
             color: white; min-height: 100vh;
         }
-        /* 核心修復：防止同一列被撐開 */
+        /* 確保卡片高度獨立，不會互相撐開 */
         .geo-card {
             background: white;
-            clip-path: polygon(0% 0%, 100% 0%, 100% 90%, 95% 100%, 0% 100%);
-            align-self: start; /* 關鍵：讓卡片高度獨立 */
+            clip-path: polygon(0% 0%, 100% 0%, 100% 92%, 92% 100%, 0% 100%);
+            align-self: start; 
             transition: all 0.3s ease;
         }
         .comment-section {
             max-height: 0;
             opacity: 0;
             overflow: hidden;
-            transition: max-height 0.4s ease, opacity 0.3s ease;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
         }
         .comment-section.expand {
-            max-height: 1000px; /* 給予足夠高度 */
+            max-height: 800px;
             opacity: 1;
             margin-top: 1rem;
         }
-        .arrow-icon { 
+        /* 箭頭翻轉邏輯 */
+        .arrow-toggle { 
             transition: transform 0.4s ease; 
-            transform: rotate(0deg); /* 預設向下 */
+            transform: rotate(0deg); 
         }
-        .arrow-icon.active { 
-            transform: rotate(180deg); /* 點擊後向上 */
+        .arrow-toggle.active { 
+            transform: rotate(180deg); 
         }
         .glass-modal {
             background: rgba(255, 255, 255, 0.1);
@@ -52,13 +53,12 @@
     <nav class="p-6 flex justify-between items-center border-b border-white/10 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md z-40">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-amber-400 rounded-full"></div>
-            <span class="text-2xl font-black tracking-widest uppercase text-white">Galeria</span>
+            <span class="text-2xl font-black tracking-widest uppercase">Galeria</span>
         </div>
         <div id="auth-status"></div>
     </nav>
 
-    <div id="post-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-10 items-start">
-        </div>
+    <div id="post-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-10 items-start"></div>
 
     <button id="add-btn" class="fixed bottom-10 right-10 w-20 h-20 bg-amber-400 text-black rounded-full shadow-2xl text-5xl z-50 hover:scale-110 transition">+</button>
 
@@ -120,9 +120,9 @@
                 const liked = data.likes?.includes(auth.currentUser?.uid);
                 
                 const card = document.createElement('div');
-                card.className = "geo-card p-6 text-black flex flex-col";
+                card.className = "geo-card p-6 text-black flex flex-col shadow-xl";
                 card.innerHTML = `
-                    <div class="text-[10px] font-bold text-amber-500 mb-1">PROJECT ID: ${id.slice(0,6)}</div>
+                    <div class="text-[10px] font-bold text-amber-500 mb-1">PROJECT ID: ${id.slice(0,6).toUpperCase()}</div>
                     <h3 class="text-2xl font-black mb-2">${data.title}</h3>
                     <p class="text-gray-600 mb-4 flex-grow">${data.content}</p>
                     <div class="flex justify-between items-center border-t pt-4">
@@ -133,17 +133,21 @@
                     </div>
                     <div class="flex justify-center mt-3">
                         <button onclick="window.toggleComments('${id}')" class="p-1 hover:text-amber-500 transition">
-                            <svg id="arrow-${id}" class="arrow-icon w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg id="arrow-${id}" class="arrow-toggle w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
                     </div>
                     <div id="sec-${id}" class="comment-section" onclick="event.stopPropagation()">
                         <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                            <input type="text" id="input-${id}" placeholder="在這裡寫下留言 (Enter)..." 
-                                onkeydown="window.handleComment(event, '${id}')"
-                                class="w-full text-xs bg-white rounded-lg px-3 py-2 border border-slate-200 outline-none focus:border-amber-400 mb-3">
-                            <div id="list-${id}" class="space-y-2 text-[11px] text-slate-600 max-h-40 overflow-y-auto"></div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <input type="text" id="input-${id}" placeholder="留言內容..." 
+                                    class="flex-grow text-xs bg-white rounded-lg px-3 py-2 border border-slate-200 outline-none focus:border-amber-400">
+                                <button onclick="window.handleComment('${id}')" class="bg-amber-400 p-2 rounded-lg hover:bg-amber-500 transition shadow-sm">
+                                    <svg class="w-4 h-4 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
+                                </button>
+                            </div>
+                            <div id="list-${id}" class="space-y-2 text-[11px] text-slate-600 max-h-40 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
                 `;
@@ -152,25 +156,22 @@
             });
         });
 
-        // 留言處理函式 (全域)
-        window.handleComment = async (e, postId) => {
-            e.stopPropagation(); 
-            if (e.key === 'Enter') {
-                const input = document.getElementById(`input-${postId}`);
-                const text = input.value.trim();
-                if (!auth.currentUser) return alert("請先登入");
-                if (!text) return;
+        // 留言處理函式 (改由按鈕點擊觸發)
+        window.handleComment = async (postId) => {
+            const input = document.getElementById(`input-${postId}`);
+            const text = input.value.trim();
+            if (!auth.currentUser) return alert("請先登入 Google 帳號");
+            if (!text) return;
 
-                try {
-                    await addDoc(collection(db, `posts/${postId}/comments`), {
-                        text: text,
-                        user: auth.currentUser.displayName,
-                        createdAt: serverTimestamp()
-                    });
-                    input.value = '';
-                } catch (err) {
-                    console.error("留言失敗", err);
-                }
+            try {
+                await addDoc(collection(db, `posts/${postId}/comments`), {
+                    text: text,
+                    user: auth.currentUser.displayName,
+                    createdAt: serverTimestamp()
+                });
+                input.value = '';
+            } catch (err) {
+                console.error("留言失敗", err);
             }
         };
 
@@ -179,14 +180,14 @@
             const arrow = document.getElementById(`arrow-${id}`);
             const isOpened = target.classList.contains('expand');
             
-            // 關閉其他所有卡片
+            // 收合其他卡片
             document.querySelectorAll('.comment-section').forEach(s => s.classList.remove('expand'));
-            document.querySelectorAll('.arrow-icon').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('.arrow-toggle').forEach(a => a.classList.remove('active'));
 
-            // 如果本來是關的，就打開它
+            // 展開目前卡片並旋轉箭頭
             if(!isOpened) {
                 target.classList.add('expand');
-                arrow.classList.add('active'); // 箭頭旋轉 180 度 (向上)
+                arrow.classList.add('active');
             }
         };
 
@@ -202,8 +203,8 @@
                 const list = document.getElementById(`list-${postId}`);
                 if(list) {
                     list.innerHTML = snap.docs.map(d => `
-                        <div class="bg-white p-2 rounded border-l-2 border-amber-400">
-                            <b class="text-amber-600 text-[9px] block">${d.data().user}:</b>
+                        <div class="bg-white p-2 rounded shadow-sm border-l-2 border-amber-400">
+                            <b class="text-amber-600 text-[9px] block uppercase">${d.data().user}</b>
                             <span>${d.data().text}</span>
                         </div>`).join('');
                 }
